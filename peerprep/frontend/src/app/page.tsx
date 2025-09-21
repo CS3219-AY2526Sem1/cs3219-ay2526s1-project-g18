@@ -1,17 +1,45 @@
 "use client";
 import Link from "next/link"
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BiSolidRightArrow } from "react-icons/bi"
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isError, setIsError] = useState(false);
-  const handleClick = () => {
-    const isCredentialsWrong = true //CHANGE TO ACTUAL CHECK FOR CREDENTIALS
-    setIsError(isCredentialsWrong);
-    if (!isCredentialsWrong) {
-      router.push("/dashboard");
+  const usernameOrEmailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+
+  async function handleLogIn() {
+    const usernameOrEmail = usernameOrEmailRef.current?.value || "";
+    const password = passwordRef.current?.value || "";
+
+    // API CALL TO BACKEND TO LOG IN
+    try {
+      const response = await fetch('http://localhost:5000/api/login', { // REPLACE WITH ACTUAL BACKEND URL
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernameOrEmail, password }),
+      });
+
+      // RESPONSE WILL BE OK IF STATUS 200
+      if (response.ok) {
+        const data = await response.json();
+        const { accessToken, id, username, email, isAdmin, createdAt } = data.data;
+        // store user info in session storage so it can be used in other components
+        sessionStorage.setItem("token", accessToken);
+        sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
+        router.push("/dashboard");
+      } else if (response.status === 401){
+      // RESPONSE STATUS 300 OR ABOVE
+        setIsError(true);
+      } else {
+        const error = await response.json();
+        console.error(error.message);
+      }
+    } catch (error) {
+      console.error("Unexpected error during log in:", error);
     }
   }
 
@@ -30,11 +58,13 @@ export default function LoginPage() {
         <div className="flex flex-col items-start justify-center w-4/5">
           <p className="font-poppins text-[#958AD5] text-xl font-medium m-1 pl-1">Email/Username</p>
           <input 
+            ref={usernameOrEmailRef}
             type="text" 
             className="w-full h-[55px] rounded-2xl p-4 mb-3 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
             placeholder="Enter email or username" />
           <p className="font-poppins text-[#958AD5] text-xl font-medium m-1 pl-1">Password</p>
           <input 
+            ref={passwordRef}
             type="password" 
             className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
             placeholder="Enter password" />
@@ -45,7 +75,7 @@ export default function LoginPage() {
         <div className="w-full flex flex-row justify-between items-center">
           <button 
             className="bg-[#2F0B6D] w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 hover:bg-[#330b78]"
-            onClick={handleClick}
+            onClick={handleLogIn}
           >Log in</button>
           <Link href="/signup">
             <button 

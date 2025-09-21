@@ -3,48 +3,56 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { BiSolidRightArrow } from "react-icons/bi"
 
-enum STATUS_RESULT {
-    VALID,
-    FORMAT_ERROR,
-    ALREADY_EXISTS
+export interface AccountDetailErrors {
+    email?: string;
+    username?: string;
+    password?: string;
+    confirmPassword?: string;
 }
 
 export default function SignUpPage() {
     const router = useRouter();
-    const [emailStatus, setEmailStatus] = useState(STATUS_RESULT.VALID);
-    const [usernameStatus, setUsernameStatus] = useState(STATUS_RESULT.VALID);
-    const [isPasswordInvalid, setIsPasswordInvalid] = useState(false);
-    const [isPasswordConfirmationInvalid, setIsPasswordConfirmationInvalid] = useState(false);
+    const [errors, setErrors] = useState<AccountDetailErrors>();
+
+    //refs for input fields
     const emailRef = useRef<HTMLInputElement>(null);
     const usernameRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
-    const isValidStatus = (status: STATUS_RESULT) => status === STATUS_RESULT.VALID;
-    const checkPasswordValid = (password: HTMLInputElement | null) => {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-        if (!password) return false;
-        return passwordRegex.test(password.value);
-    }
-    const checkPasswordMatch = (password: HTMLInputElement | null, confirmPassword: HTMLInputElement | null) => {
-        return password?.value === confirmPassword?.value;
+    async function handleSignUp() {
+        const email = emailRef.current?.value || "";
+        const username = usernameRef.current?.value || "";
+        const password = passwordRef.current?.value || "";
+        const confirmPassword = confirmPasswordRef.current?.value || "";
+
+        // API CALL TO BACKEND TO TRY TO SIGN UP
+        try {
+            const response = await fetch('http://localhost:5000/api/signup', { // REPLACE WITH ACTUAL BACKEND URL
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, username, password, confirmPassword }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const { accessToken, id, username, email, isAdmin, createdAt } = data.data;
+                // store user info in session storage so it can be used in other components
+                sessionStorage.setItem("token", accessToken);
+                sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
+                router.push("/dashboard");            
+            } else if (response.status === 400) {
+                setErrors(data.errors);
+            } else {
+                const error = await response.json();
+                console.error(error.message);
+            }
+        } catch (error) {
+            console.error("Unexpected error during sign up:", error);
+        }
     }
 
-
-    const handleClick = () => {
-      const resultEmailStatus = STATUS_RESULT.VALID //CHANGE TO ACTUAL CHECK FOR EMAIL VALIDITY
-      setEmailStatus(resultEmailStatus);
-      const resultUsernameStatus = STATUS_RESULT.VALID  //CHANGE TO ACTUAL CHECK FOR USERNAME VALIDITY
-      setUsernameStatus(resultUsernameStatus);
-      const resultIsPasswordValid = checkPasswordValid(passwordRef.current)
-      setIsPasswordInvalid(!resultIsPasswordValid);      
-      const resultIsPasswordConfirmationValid = checkPasswordMatch(passwordRef.current, confirmPasswordRef.current) 
-      setIsPasswordConfirmationInvalid(!resultIsPasswordConfirmationValid);
-      const isCredentialsWrong = !isValidStatus(resultEmailStatus) || !isValidStatus(resultUsernameStatus) || !resultIsPasswordValid || !resultIsPasswordConfirmationValid
-      if (!isCredentialsWrong) {
-        router.push("/dashboard");
-      }
-    }
   return (
     <div className="bg-[#050325] h-screen w-screen flex items-center justify-center">
       <div className="bg-[#2119566E] p-8 rounded-4xl w-[650px] h-[697px] flex flex-col items-start justify-between">
@@ -65,13 +73,10 @@ export default function SignUpPage() {
                 type="text" 
                 className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
                 placeholder="Enter your email" />
-            {emailStatus === STATUS_RESULT.FORMAT_ERROR && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">Invalid email format.</p>
+            {errors?.email && (
+            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.email}</p>
             )}
-            {emailStatus === STATUS_RESULT.ALREADY_EXISTS && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">An account with this email has already been registered.</p>
-            )}
-            {emailStatus === STATUS_RESULT.VALID && (
+            {!errors?.email && (
                 <div className="h-4"/>
             )}
           </div>
@@ -84,13 +89,10 @@ export default function SignUpPage() {
                 type="text" 
                 className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
                 placeholder="Enter a username" />
-            {usernameStatus === STATUS_RESULT.FORMAT_ERROR && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">Username should have 3 to 20 characters and should be alphanumeric.</p>
+            {errors?.username && (
+            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.username}</p>
             )}
-            {usernameStatus === STATUS_RESULT.ALREADY_EXISTS && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">This username has been taken. Please choose a different one.</p>
-            )}
-            {usernameStatus === STATUS_RESULT.VALID && (
+            {!errors?.username && (
                 <div className="h-4"/>
             )}
           </div>
@@ -103,10 +105,10 @@ export default function SignUpPage() {
                 type="password" 
                 className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
                 placeholder="Enter a password" />
-            {isPasswordInvalid && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">Password requires at least 8 characters with uppercase, lowercase, and numeric digits.</p>
+            {errors?.password && (
+            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.password}</p>
             )}
-            {!isPasswordInvalid && (
+            {!errors?.password && (
                 <div className="h-4"/>
             )}
           </div>
@@ -119,10 +121,10 @@ export default function SignUpPage() {
                 type="password" 
                 className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
                 placeholder="Confirm your password" />
-            {isPasswordConfirmationInvalid && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">Password does not match.</p>
+            {errors?.confirmPassword && (
+            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.confirmPassword}</p>
             )}
-            {!isPasswordConfirmationInvalid && (
+            {!errors?.confirmPassword && (
                 <div className="h-4"/>
             )}
           </div>
@@ -131,7 +133,7 @@ export default function SignUpPage() {
         <div className="flex justify-end w-full">
         <button 
           className="bg-linear-to-r from-[#7316D7] to-[#0B6D59] w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 mr-4"
-          onClick={handleClick}>
+          onClick={handleSignUp}>
           <div className="flex flex-row justify-center items-center space-x-2">
             <span> Sign up </span>
             <BiSolidRightArrow className="text-white h-6 w-6"/>
