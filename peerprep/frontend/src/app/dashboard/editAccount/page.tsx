@@ -15,6 +15,7 @@ export default function EditAccountPage() {
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
 
+    //This fetches the logged in user details from session storage
     useEffect(() => {
         const user = sessionStorage.getItem("user");
         const token = sessionStorage.getItem("token");
@@ -34,8 +35,9 @@ export default function EditAccountPage() {
             }
         }
     }, [])
+
     async function handleEditAccount() {
-        // API CALL TO BACKEND TO TRY TO SIGN UP
+        // API CALL TO BACKEND TO EDIT ACCOUNT DETAILS
         try {
             const response = await fetch(`http://localhost:5000/api/edit-account/${user.id}`, { // REPLACE WITH ACTUAL BACKEND URL
                 method: 'PATCH',
@@ -52,6 +54,7 @@ export default function EditAccountPage() {
                 sessionStorage.setItem("user", JSON.stringify({ ...user, username, email }));
                 router.push("/dashboard");
             } else if (response.status === 400) {
+                // Validation errors
                 setErrors(data.errors);
             } else {
                 const error = await response.json();
@@ -74,6 +77,7 @@ export default function EditAccountPage() {
                     {/* Email */}
                     <div className="flex flex-col w-full">
                         <p className="font-poppins text-[#958AD5] text-xl font-medium pl-1 mb-1">Email</p>
+                        {/* The current email is pre-filled in the input field */}
                         <input 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -91,6 +95,7 @@ export default function EditAccountPage() {
                     {/* Username */}
                     <div className="flex flex-col w-full">
                         <p className="font-poppins text-[#958AD5] text-xl font-medium mb-1 pl-1">Username</p>
+                        {/* The current username is pre-filled in the input field */}
                         <input 
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}

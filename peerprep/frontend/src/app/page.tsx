@@ -23,7 +23,6 @@ export default function LoginPage() {
         body: JSON.stringify({ usernameOrEmail, password }),
       });
 
-      // RESPONSE WILL BE OK IF STATUS 200
       if (response.ok) {
         const data = await response.json();
         const { accessToken, id, username, email, isAdmin, createdAt } = data.data;
@@ -31,9 +30,11 @@ export default function LoginPage() {
         sessionStorage.setItem("token", accessToken);
         sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
         router.push("/dashboard");
-      } else if (response.status === 401){
-      // RESPONSE STATUS 300 OR ABOVE
+
+      } else if (response.status === 401) {
+        // wrong credentials
         setIsError(true);
+        
       } else {
         const error = await response.json();
         console.error(error.message);
