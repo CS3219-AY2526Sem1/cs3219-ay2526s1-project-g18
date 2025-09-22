@@ -1,103 +1,95 @@
-import Image from "next/image";
+"use client";
+import Link from "next/link"
+import { useRef, useState } from "react";
+import { BiSolidRightArrow } from "react-icons/bi"
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function LoginPage() {
+  const router = useRouter();
+  const [isError, setIsError] = useState(false);
+  const usernameOrEmailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+
+  async function handleLogIn() {
+    const usernameOrEmail = usernameOrEmailRef.current?.value || "";
+    const password = passwordRef.current?.value || "";
+
+    // API CALL TO BACKEND TO LOG IN
+    try {
+      const response = await fetch('http://localhost:5000/api/login', { // REPLACE WITH ACTUAL BACKEND URL
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernameOrEmail, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const { accessToken, id, username, email, isAdmin, createdAt } = data.data;
+        // store user info in session storage so it can be used in other components
+        sessionStorage.setItem("token", accessToken);
+        sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
+        router.push("/dashboard");
+
+      } else if (response.status === 401) {
+        // wrong credentials
+        setIsError(true);
+        
+      } else {
+        const error = await response.json();
+        console.error(error.message);
+      }
+    } catch (error) {
+      console.error("Unexpected error during log in:", error);
+    }
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div 
+      className="bg-[#050325] h-screen w-screen flex items-center justify-center"
+    >
+      <div className="bg-[#2119566E] p-16 rounded-4xl w-[650px] h-[632px] flex flex-col items-center justify-between">
+        <div className="flex items-center justify-center flex-col space-y-4">
+          <div className="flex flex-row">
+            <span className="font-inter text-[#6E5AE2] text-8xl font-bold ">Peer</span>
+            <span className="font-inter text-[#5ae2c6] text-8xl font-bold ">Prep</span>
+          </div>
+          <p className="font-poppins text-[#FFFFFF87] text-xl font-medium">Ace that interview. Together.</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="flex flex-col items-start justify-center w-4/5">
+          <p className="font-poppins text-[#958AD5] text-xl font-medium m-1 pl-1">Email/Username</p>
+          <input 
+            ref={usernameOrEmailRef}
+            type="text" 
+            className="w-full h-[55px] rounded-2xl p-4 mb-3 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+            placeholder="Enter email or username" />
+          <p className="font-poppins text-[#958AD5] text-xl font-medium m-1 pl-1">Password</p>
+          <input 
+            ref={passwordRef}
+            type="password" 
+            className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+            placeholder="Enter password" />
+        </div>
+        {isError && (
+          <p className="font-poppins text-[#d36a6a] text-xl font-medium m-1 pl-1">Invalid email/username or password</p>
+        )}
+        <div className="w-full flex flex-row justify-between items-center">
+          <button 
+            className="bg-[#2F0B6D] w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 hover:bg-[#330b78]"
+            onClick={handleLogIn}
+          >Log in</button>
+          <Link href="/signup">
+            <button 
+              className="bg-linear-to-r from-[#7316D7] to-[#0B6D59] w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2"
+            >
+              <div className="flex flex-row justify-center items-center space-x-2">
+                <span> Sign up </span>
+                <BiSolidRightArrow className="text-white h-6 w-6"/>
+              </div>
+            </button>
+          </Link>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
