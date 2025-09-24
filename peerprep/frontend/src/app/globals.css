@@ -1,8 +1,52 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+
+  /*Color palette*/
+  --color-dark-blue-bg: var(--dark-blue-bg);
+
+  --color-dark-box: var(--dark-box);
+  --color-light-box: var(--light-box);
+  --color-darkest-box: var(--darkest-box);
+
+  --color-logo-purple: var(--logo-purple);
+  --color-logo-green: var(--logo-green);
+
+  /*outline colors*/
+
+  --color-purple-outline: var(--bright-purple);
+
+
+  /*button colors*/
+  --color-purple-button: var(--bright-purple);
+  --color-dg-button: var(--darker-green);
+  --color-lg-button: var(--light-green);
+  --color-blue-button: var(--button-blue);
+  --color-red-button: var(--hard-translucent);
+
+  /*hover states*/
+  --color-blue-button-hover: var(--button-blue-hover);
+  --color-green-button-hover: var(--green-hover);
+  --color-red-button-hover: var(--red-hover);
+
+  /*easy med hard buttons*/
+  --color-easy-translucent: var(--easy-translucent);
+  --color-medium-translucent: var(--medium-translucent);
+  --color-hard-translucent: var(--hard-translucent);
+
+  /*font colors*/
+  --color-text-main: var(--text-main);
+  --color-text-light: var(--text-light);
+  --color-text-white: var(--text-white);
+  --color-text-grey: var(--text-grey);
+  --color-text-error: var(--text-error);
+  --color-text-red-button: var(--text-red-button);
+
+  /* for input fields */
+  --color-text-field: var(--text-field);/*text inside input field*/
+  --color-text-area: var(--text-area);/*bg color*/
+
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-inter: var(--font-inter);
@@ -10,8 +54,43 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+
+  --dark-blue-bg: #050325;
+
+  /* widget boxes*/
+  --dark-box: #2119566E;
+  --light-box: #6e5ae293;
+  --darkest-box: #21195644;
+
+  /*logo colors*/
+  --logo-purple: #6E5AE2;
+  --logo-green: #5ae2c6;
+
+  /*button colors*/
+  --bright-purple: #7316D7;
+  --darker-green: #0B6D59;
+  --light-green: #158C66;
+  --button-blue: #2F0B6D;
+  --button-blue-hover: #460bacbb;
+  --green-hover: #1c7765;
+  --red-hover: #570530;
+
+  /*easy med hard buttons*/
+  --easy-translucent: #158c668e;
+  --medium-translucent: #cba116b5;
+  --hard-translucent: #96141491;
+
+  /*font colors*/
+  --text-main: #958AD5;
+  --text-light: #D0CAED;
+  --text-white: #FFFFFF;
+  --text-grey: rgba(255, 255, 255, 0.53);
+  --text-field: #3F3C4D;
+  --text-area: #FFFFFF6B;
+  --text-error: #d36a6a;
+  --text-red-button: #D4A2A2;
+
+
 }
 
 @media (prefers-color-scheme: dark) {
