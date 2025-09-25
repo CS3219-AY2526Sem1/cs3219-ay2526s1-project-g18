@@ -18,8 +18,8 @@ model Question {
   title       String             @db.VarChar(255)
   createdAt   DateTime           @default(now()) @db.Timestamp(6)
   description String?
-  difficulty  String?            @db.VarChar(50)
-  topics      String[]           @db.VarChar(100)
+  difficulty  QuestionDifficulty
+  topics      QuestionTopic[]    
   published   Boolean            @default(false)
   solutions   QuestionSolution[]
 }
@@ -33,4 +33,33 @@ model QuestionSolution {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionTopic {
+  ARRAYS
+  STRINGS
+  LINKED_LISTS
+  STACKS
+  QUEUES
+  TREES
+  GRAPHS
+  DYNAMIC_PROGRAMMING
+  GREEDY
+  BACKTRACKING
+  BINARY_SEARCH
+  SORTING
+  HASHING
+  HEAP
+  TRIE
+  RECURSION
+  SLIDING_WINDOW
+  TWO_POINTERS
+  MATH
+  BIT_MANIPULATION
 }

@@ -5,7 +5,7 @@ import questionRouter from './routes/questionRoutes.ts';
 const app = express();
 app.use(express.json());
 
-app.use('/api/question', questionRouter)
+app.use('/api/questions', questionRouter)
 
 app.get('/', (req, res) => {
   res.json({
