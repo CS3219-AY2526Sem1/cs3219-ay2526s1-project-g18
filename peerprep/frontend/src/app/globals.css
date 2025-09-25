@@ -15,6 +15,9 @@
   /*outline colors*/
 
   --color-purple-outline: var(--bright-purple);
+  --color-green-outline: var(--green-outline);
+  --color-red-outline: var(--red-outline);
+  --color-yellow-outline: var(--yellow-outline);  
 
 
   /*button colors*/
@@ -28,6 +31,7 @@
   --color-blue-button-hover: var(--button-blue-hover);
   --color-green-button-hover: var(--green-hover);
   --color-red-button-hover: var(--red-hover);
+  --color-yellow-button-hover: var(--yellow-hover);
 
   /*easy med hard buttons*/
   --color-easy-translucent: var(--easy-translucent);
@@ -46,6 +50,10 @@
   --color-text-field: var(--text-field);/*text inside input field*/
   --color-text-area: var(--text-area);/*bg color*/
 
+  /*pretty colors*/
+  --color-pretty-blue: var(--pretty-blue);
+  --color-pretty-purple: var(--pretty-purple);
+
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -59,7 +67,7 @@
 
   /* widget boxes*/
   --dark-box: #2119566E;
-  --light-box: #6e5ae293;
+  --light-box: #6e5ae24a;
   --darkest-box: #21195644;
 
   /*logo colors*/
@@ -71,13 +79,21 @@
   --darker-green: #0B6D59;
   --light-green: #158C66;
   --button-blue: #2F0B6D;
+
+  /*outline colors*/
+  --green-outline: #0da385;
+  --red-outline: #961414;
+  --yellow-outline: #C4A10D;
+
+  /*hover states*/
   --button-blue-hover: #460bacbb;
-  --green-hover: #1c7765;
-  --red-hover: #570530;
+  --green-hover: #1c7765e8;
+  --red-hover: #910e0ecf;
+  --yellow-hover: rgba(196, 156, 13, 0.724);
 
   /*easy med hard buttons*/
   --easy-translucent: #158c668e;
-  --medium-translucent: #cba116b5;
+  --medium-translucent: #cba1167a;
   --hard-translucent: #96141491;
 
   /*font colors*/
@@ -89,6 +105,9 @@
   --text-area: #FFFFFF6B;
   --text-error: #d36a6a;
   --text-red-button: #D4A2A2;
+
+  --pretty-blue: #8ec1e7;
+  --pretty-purple: #dcace8;
 
 
 }
