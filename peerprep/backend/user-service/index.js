@@ -3,7 +3,6 @@ import cors from "cors";
 
 import userRoutes from "./routes/user-routes.js";
 import authRoutes from "./routes/auth-routes.js";
-import frontendRoutes from "./routes/frontend-routes.js";
 
 const app = express();
 
@@ -32,8 +31,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/users", userRoutes);
-app.use("/auth", authRoutes);
-app.use("/api", frontendRoutes);
+app.use("/api", authRoutes);
 
 app.get("/", (req, res, next) => {
   console.log("Sending Greetings!");
