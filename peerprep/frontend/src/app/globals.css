@@ -32,6 +32,7 @@
   --color-green-button-hover: var(--green-hover);
   --color-red-button-hover: var(--red-hover);
   --color-yellow-button-hover: var(--yellow-hover);
+  --color-dark-blue-hover: var(--dark-blue-hover);
 
   /*easy med hard buttons*/
   --color-easy-translucent: var(--easy-translucent);
@@ -90,6 +91,7 @@
   --green-hover: #1c7765e8;
   --red-hover: #910e0ecf;
   --yellow-hover: rgba(196, 156, 13, 0.724);
+  --dark-blue-hover: #151152e8;
 
   /*easy med hard buttons*/
   --easy-translucent: #158c668e;
