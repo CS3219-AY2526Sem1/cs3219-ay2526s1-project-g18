@@ -28,14 +28,14 @@ export default function SignUpPage() {
 
         // API CALL TO BACKEND TO TRY TO SIGN UP
         try {
-            const response = await fetch('http://localhost:5000/api/signup', { // REPLACE WITH ACTUAL BACKEND URL
+            const response = await fetch('http://localhost:3001/api/signup', { // REPLACE WITH ACTUAL BACKEND URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, username, password, confirmPassword }),
             });
 
+            
             const data = await response.json();
-
             if (response.ok) {
                 const { accessToken, id, username, email, isAdmin, createdAt } = data.data;
                 // store user info in session storage so it can be used in other components
@@ -45,8 +45,7 @@ export default function SignUpPage() {
             } else if (response.status === 400) {
                 setErrors(data.errors);
             } else {
-                const error = await response.json();
-                console.error(error.message);
+                console.error(data);
             }
         } catch (error) {
             console.error("Unexpected error during sign up:", error);
