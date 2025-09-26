@@ -54,27 +54,27 @@ export default function SignUpPage() {
     }
 
   return (
-    <div className="bg-[#050325] h-screen w-screen flex items-center justify-center">
-      <div className="bg-[#2119566E] p-8 rounded-4xl w-[650px] h-[697px] flex flex-col items-start justify-between">
+    <div className="bg-dark-blue-bg h-screen w-screen flex items-center justify-center">
+      <div className="bg-dark-box p-8 rounded-4xl w-[650px] h-[697px] flex flex-col items-start justify-between">
         <div className="flex items-center justify-center flex-col space-y-3">
           <div className="flex flex-row">
-            <span className="font-inter text-[#6E5AE2] text-6xl font-bold">Peer</span>
-            <span className="font-inter text-[#5ae2c6] text-6xl font-bold">Prep</span>
+            <span className="font-inter text-logo-purple text-6xl font-bold">Peer</span>
+            <span className="font-inter text-logo-green text-6xl font-bold">Prep</span>
           </div>
-          <p className="font-poppins text-[#958AD5] text-4xl font-medium ml-4 mb-3">Create account</p>
+          <p className="font-poppins text-text-main text-4xl font-medium ml-4 mb-3">Create account</p>
         </div>
         <div className="flex flex-col items-start justify-center w-5/6 ml-4">
 
           {/* Email */}
           <div className="flex flex-col w-full">
-            <p className="font-poppins text-[#958AD5] text-xl font-medium pl-1 mb-1">Email</p>
+            <p className="font-poppins text-text-main text-xl font-medium pl-1 mb-1">Email</p>
             <input 
                 ref={emailRef}
                 type="text" 
-                className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+                className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field placeholder-text-field font-poppins text-xl font-medium" 
                 placeholder="Enter your email" />
             {errors?.email && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.email}</p>
+            <p className="font-poppins text-text-error text-xs font-medium mt-1 pl-1">{errors.email}</p>
             )}
             {!errors?.email && (
                 <div className="h-4"/>
@@ -83,14 +83,14 @@ export default function SignUpPage() {
 
           {/* Username */}
           <div className="flex flex-col w-full">
-            <p className="font-poppins text-[#958AD5] text-xl font-medium mb-1 pl-1">Username</p>
+            <p className="font-poppins text-text-main text-xl font-medium mb-1 pl-1">Username</p>
             <input 
                 ref={usernameRef}
                 type="text" 
-                className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+                className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field placeholder-text-field font-poppins text-xl font-medium" 
                 placeholder="Enter a username" />
             {errors?.username && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.username}</p>
+            <p className="font-poppins text-text-error text-xs font-medium mt-1 pl-1">{errors.username}</p>
             )}
             {!errors?.username && (
                 <div className="h-4"/>
@@ -99,14 +99,14 @@ export default function SignUpPage() {
 
           {/* Password */}
           <div className="flex flex-col w-full">
-            <p className="font-poppins text-[#958AD5] text-xl font-medium mb-1 pl-1">Password</p>
+            <p className="font-poppins text-text-main text-xl font-medium mb-1 pl-1">Password</p>
             <input 
                 ref={passwordRef}
                 type="password" 
-                className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+                className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field placeholder-text-field font-poppins text-xl font-medium" 
                 placeholder="Enter a password" />
             {errors?.password && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.password}</p>
+            <p className="font-poppins text-text-error text-xs font-medium mt-1 pl-1">{errors.password}</p>
             )}
             {!errors?.password && (
                 <div className="h-4"/>
@@ -115,14 +115,14 @@ export default function SignUpPage() {
 
           {/* Confirm Password */}
           <div className="flex flex-col w-full">
-            <p className="font-poppins text-[#958AD5] text-xl font-medium mb-1 pl-1">Confirm Password</p>
+            <p className="font-poppins text-text-main text-xl font-medium mb-1 pl-1">Confirm Password</p>
             <input 
                 ref={confirmPasswordRef}
                 type="password" 
-                className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] placeholder-[#3F3C4D] font-poppins text-xl font-medium" 
+                className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field placeholder-text-field font-poppins text-xl font-medium" 
                 placeholder="Confirm your password" />
             {errors?.confirmPassword && (
-            <p className="font-poppins text-[#d36a6a] text-xs font-medium mt-1 pl-1">{errors.confirmPassword}</p>
+            <p className="font-poppins text-text-error text-xs font-medium mt-1 pl-1">{errors.confirmPassword}</p>
             )}
             {!errors?.confirmPassword && (
                 <div className="h-4"/>
@@ -132,7 +132,7 @@ export default function SignUpPage() {
         {/* ADD VALIDATION OF EMAIL, USERNAME BEFORE ALLOWING SIGN UP */}
         <div className="flex justify-end w-full">
         <button 
-          className="bg-linear-to-r from-[#7316D7] to-[#0B6D59] w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 mr-4"
+          className="bg-linear-to-r from-purple-button to-dg-button w-[215px] h-[58px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-purple-outline hover:border-2 mr-4"
           onClick={handleSignUp}>
           <div className="flex flex-row justify-center items-center space-x-2">
             <span> Sign up </span>
