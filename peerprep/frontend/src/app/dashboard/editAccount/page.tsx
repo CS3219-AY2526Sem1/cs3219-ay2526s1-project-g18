@@ -66,26 +66,26 @@ export default function EditAccountPage() {
     }
 
   return (
-    <div className="bg-[#050325] h-screen w-screen flex items-center justify-center">
-        <div className="bg-[#2119566E] p-8 space-x-8 rounded-4xl w-[854px] h-[480px] flex flex-row items-center justify-between">
+    <div className="bg-dark-blue-bg h-screen w-screen flex items-center justify-center">
+        <div className="bg-dark-box p-8 space-x-8 rounded-4xl w-[854px] h-[480px] flex flex-row items-center justify-between">
             <div className="flex justify-center items-center w-1/4 ">
-                <PiSmiley className="w-40 h-40 bg-[#958AD5] rounded-full"/>
+                <PiSmiley className="w-40 h-40 bg-text-main rounded-full"/>
             </div>
             <div className="flex items-start justify-center flex-col space-y-4 w-3/4">
-                <p className="font-poppins text-[#958AD5] text-4xl font-medium">Edit account information</p>
+                <p className="font-poppins text-text-main text-4xl font-medium">Edit account information</p>
                 <div className="flex flex-col items-start justify-center w-5/6">
                     {/* Email */}
                     <div className="flex flex-col w-full">
-                        <p className="font-poppins text-[#958AD5] text-xl font-medium pl-1 mb-1">Email</p>
+                        <p className="font-poppins text-text-main text-xl font-medium pl-1 mb-1">Email</p>
                         {/* The current email is pre-filled in the input field */}
                         <input 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             type="text" 
-                            className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] font-poppins text-xl font-medium" 
+                            className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field font-poppins text-xl font-medium" 
                         />
                         {errors?.email && (
-                        <p className="font-poppins text-[#d36a6a] text-s font-medium mt-1 pl-1">{errors.email}</p>
+                        <p className="font-poppins text-text-error text-s font-medium mt-1 pl-1">{errors.email}</p>
                         )}
                         {!errors?.email && (
                             <div className="h-4"/>
@@ -94,16 +94,16 @@ export default function EditAccountPage() {
 
                     {/* Username */}
                     <div className="flex flex-col w-full">
-                        <p className="font-poppins text-[#958AD5] text-xl font-medium mb-1 pl-1">Username</p>
+                        <p className="font-poppins text-text-main text-xl font-medium mb-1 pl-1">Username</p>
                         {/* The current username is pre-filled in the input field */}
                         <input 
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             type="text" 
-                            className="w-full h-[55px] rounded-2xl p-4 bg-[#FFFFFF6B] focus:border-[#6E5AE2] focus:border-2 focus:outline-none text-[#3F3C4D] font-poppins text-xl font-medium" 
+                            className="w-full h-[55px] rounded-2xl p-4 bg-text-area focus:border-purple-outline focus:border-2 focus:outline-none text-text-field font-poppins text-xl font-medium" 
                         />
                         {errors?.username && (
-                        <p className="font-poppins text-[#d36a6a] text-s font-medium mt-1 pl-1">{errors.username}</p>
+                        <p className="font-poppins text-text-error text-s font-medium mt-1 pl-1">{errors.username}</p>
                         )}
                         {!errors?.username && (
                         <div className="h-4"/>
@@ -111,7 +111,7 @@ export default function EditAccountPage() {
                     </div>
                     <div className="w-full flex flex-row justify-between items-center mt-8">
                         <button 
-                            className="bg-[#0B6D59] w-[215px] h-[54px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 hover:bg-[#1c7765]"
+                            className="bg-dg-button w-[215px] h-[54px] rounded-xl text-white font-poppins text-3xl font-medium hover:border-purple-outline hover:border-2 hover:bg-green-button-hover"
                             onClick={handleEditAccount}
                         >
                             <div className="flex flex-row justify-center items-center space-x-2">
@@ -121,10 +121,10 @@ export default function EditAccountPage() {
                         </button>
                         <Link href="/dashboard">
                             <button 
-                                className="bg-[#46102B] w-[215px] h-[58px] rounded-xl text-[#D4A2A2] font-poppins text-3xl font-medium hover:border-[#6E5AE2] hover:border-2 hover:bg-[#570530]"
+                                className="bg-red-button w-[215px] h-[58px] rounded-xl text-text-red-button font-poppins text-3xl font-medium hover:border-purple-outline hover:border-2 hover:bg-red-button-hover"
                             >
                                 <div className="flex flex-row justify-center items-center space-x-2">
-                                    <FaX className="text-[#D4A2A2] h-6 w-6"/>
+                                    <FaX className="text-text-red-button h-6 w-6"/>
                                     <span> Cancel </span>
                                 </div>
                             </button>
