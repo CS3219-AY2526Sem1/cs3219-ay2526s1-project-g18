@@ -45,4 +45,3 @@ npm start
 
 - `POST /requests` - Add user to queue based on criteria
 - `DELETE /requests` - Remove user from queue based on criteria
-- `DELETE /matches` - Match users in the given queue
