@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import requestRoute from "./routes/request-route.js";
+import { runMatchmaker } from "./matchmaker.js";
 
 const app = express();
 
@@ -37,5 +38,8 @@ app.get("/", (req, res, next) => {
     message: "Hello World from matching-service",
   });
 });
+
+// Looping function to match users in queues
+runMatchmaker();
 
 export default app;

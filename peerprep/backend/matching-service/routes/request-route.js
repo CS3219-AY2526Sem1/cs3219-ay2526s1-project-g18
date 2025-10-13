@@ -2,7 +2,7 @@ import express from "express";
 
 import { 
   joinQueue,
-  leaveQueue, 
+  manualLeaveQueues, 
   matchUsers
  } from "../controllers/queue-controller.js";
 
@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post("/requests" , joinQueue);
 
-router.delete("/requests" , leaveQueue);
+router.delete("/requests" , manualLeaveQueues);
 
 router.delete("/matches" , matchUsers);
 
