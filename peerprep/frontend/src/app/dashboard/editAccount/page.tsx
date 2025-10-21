@@ -39,7 +39,7 @@ export default function EditAccountPage() {
     async function handleEditAccount() {
         // API CALL TO BACKEND TO EDIT ACCOUNT DETAILS
         try {
-            const response = await fetch(`http://localhost:3001/api/edit-account/${user.id}`, { // REPLACE WITH ACTUAL BACKEND URL
+            const response = await fetch(`http://localhost:3001/users/${user.id}`, { // REPLACE WITH ACTUAL BACKEND URL
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -54,11 +54,9 @@ export default function EditAccountPage() {
                 sessionStorage.setItem("user", JSON.stringify({ ...user, username, email }));
                 router.push("/dashboard");
             } else if (response.status === 400) {
-                // Validation errors
                 setErrors(data.errors);
             } else {
-                const error = await response.json();
-                console.error(error.message);
+                console.error(data);
             }
         } catch (error) {
             console.error("Unexpected error while saving:", error);
