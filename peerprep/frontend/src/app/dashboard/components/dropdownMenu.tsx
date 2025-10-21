@@ -5,6 +5,7 @@ interface DropdownMenuProps {
   topics: string[];
   placeholder?: string;
   onOpenChange?: (isOpen: boolean) => void;
+  onTopicSelect?: (topic: string) => void;
   className?: string;
 }
 
@@ -12,6 +13,7 @@ export default function DropdownMenu({
   topics, 
   placeholder = "Select Question Topic",
   onOpenChange,
+  onTopicSelect,
   className = ""
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +44,7 @@ export default function DropdownMenu({
 
   const handleSelect = (topic: string) => {
     setSelectedTopic(topic);
+    onTopicSelect?.(topic); // Notify parent
     setClosed();
   };
 

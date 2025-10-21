@@ -4,16 +4,35 @@ import React, { useState } from 'react';
 // import match-n-save image frm public folder
 import matchNCode from "../../../../public/match-n-code.svg"
 import DropdownMenu from '../components/dropdownMenu';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-const handleTopicSelect = (topic: string) => {
-console.log('Selected topic:', topic);
-};
+
+const dummyTopics =['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching'];
 
 const isOpen = false;
 
-export default function MatchingWidget(){
+export default function MatchingWidget() {
+    
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('easy');
+    //const []
     const [isDropdownOpen, setDropdownOpenState] = useState(false);
+    const [selectedTopic, setSelectedTopic] = useState<string>('');
+    const router = useRouter();
+
+    const handleFindMatchClick = () => {
+    if (selectedTopic == '') {
+      alert("Please select a topic first.");
+      return;
+    }
+    // navigate with query params
+    router.push(
+      `/matching_notifications?topic=${encodeURIComponent(
+        selectedTopic
+      )}&difficulty=${encodeURIComponent(selectedDifficulty)}`
+    );
+  };
+
     return(
         <div className="bg-dark-box p-6 pl-9 rounded-2xl">
             <div className="flex items-center space-x-5 mb-4">
@@ -49,14 +68,20 @@ export default function MatchingWidget(){
                     </button>
                 </div>
                 <DropdownMenu 
-                    topics={['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching']}
+                    topics={dummyTopics}
                     onOpenChange={setDropdownOpenState}
+                    onTopicSelect={(topic) => setSelectedTopic(topic)}
                     placeholder="Select Question Topic"
                     className="w-full"
                 />
-                <button className="bg-gradient-to-r from-purple-button to-dg-button p-4 w-full rounded-xl text-white font-poppins text-5xl font-medium hover:border-logo-purple hover:border-2 hover:bg-blue-button-hover"style={{ marginTop: isDropdownOpen ? '250px' : '0' }}>
+                
+                <button 
+                    className="bg-gradient-to-r from-purple-button to-dg-button p-4 w-full rounded-xl text-white font-poppins text-5xl font-medium hover:border-logo-purple hover:border-2 hover:bg-blue-button-hover"style={{ marginTop: isDropdownOpen ? '250px' : '0' }}
+                    onClick={handleFindMatchClick}
+                >
                     Find Match
                 </button>
+                
             </div>
         </div>
     )
