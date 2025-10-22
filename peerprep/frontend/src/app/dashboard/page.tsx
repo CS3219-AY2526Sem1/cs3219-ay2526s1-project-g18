@@ -25,27 +25,27 @@ export default function DashboardPage() {
   const[userName, setUserName] =  useState<string>("")
   const[userId, setUserId] = useState<number | null>(null)
 
-
-  useEffect(() => {
-        const user = sessionStorage.getItem("user");
-        const token = sessionStorage.getItem("token");
-        if (!user || !token) {
-            router.push("/");
-            console.error("You must be logged in to access this page.");
-        } else {
+  // Make sure user is logged in + get userId and also userName
+  // useEffect(() => {
+  //       const user = sessionStorage.getItem("user");
+  //       const token = sessionStorage.getItem("token");
+  //       if (!user || !token) {
+  //           router.push("/");
+  //           console.error("You must be logged in to access this page.");
+  //       } else {
           
-            const parsedUser = JSON.parse(user);
-            setUser(parsedUser);
-            setToken(token);
-            if (!parsedUser.id || !parsedUser.username ) {
-                router.push("/");
-                console.error("Invalid user data in session storage:", parsedUser);
-            } else {
-                setUserName(parsedUser.username);
-                setUserId(parseInt(parsedUser.id));
-            }
-        }
-    }, [])
+  //           const parsedUser = JSON.parse(user);
+  //           setUser(parsedUser);
+  //           setToken(token);
+  //           if (!parsedUser.id || !parsedUser.username ) {
+  //               router.push("/");
+  //               console.error("Invalid user data in session storage:", parsedUser);
+  //           } else {
+  //               setUserName(parsedUser.username);
+  //               setUserId(parseInt(parsedUser.id));
+  //           }
+  //       }
+  //   }, [])
   return (
     <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12">
 

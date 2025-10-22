@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import React, { useState } from 'react';
 // import match-n-save image frm public folder
-import matchNCode from "../../../../public/match-n-code.svg"
+import matchNCode from "../../../../public/match-n-code.svg";
 import DropdownMenu from '../components/dropdownMenu';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,8 @@ const isOpen = false;
 
 export default function MatchingWidget() {
     
-    const [selectedDifficulty, setSelectedDifficulty] = useState<string>('easy');
+    const [selectedDifficulty, setSelectedDifficulty] = useState<string>('Easy');
+    const [isError, setIsError] = useState(false);
     //const []
     const [isDropdownOpen, setDropdownOpenState] = useState(false);
     const [selectedTopic, setSelectedTopic] = useState<string>('');
@@ -22,7 +23,8 @@ export default function MatchingWidget() {
 
     const handleFindMatchClick = () => {
     if (selectedTopic == '') {
-      alert("Please select a topic first.");
+      //alert("Please select a topic first.");
+      setIsError(true);
       return;
     }
     // navigate with query params
@@ -44,25 +46,25 @@ export default function MatchingWidget() {
                 <div className="flex space-x-10 pt-5">
                     <button
                         className={`bg-easy-translucent p-3 rounded-xl font-poppins text-5xl hover:bg-green-button-hover ${
-                            selectedDifficulty === 'easy' ? 'ring-4 ring-green-outline' : ''
+                            selectedDifficulty === 'Easy' ? 'ring-4 ring-green-outline' : ''
                         }`}
-                        onClick={() => setSelectedDifficulty('easy')}
+                        onClick={() => setSelectedDifficulty('Easy')}
                     >
                         Easy
                     </button>
                     <button
                         className={`bg-medium-translucent p-3 rounded-xl font-poppins text-5xl hover:bg-yellow-button-hover ${
-                            selectedDifficulty === 'medium' ? 'ring-4 ring-yellow-outline' : ''
+                            selectedDifficulty === 'Medium' ? 'ring-4 ring-yellow-outline' : ''
                         }`}
-                        onClick={() => setSelectedDifficulty('medium')}
+                        onClick={() => setSelectedDifficulty('Medium')}
                     >
                         Medium
                     </button>
                     <button
                         className={`bg-hard-translucent p-3 rounded-xl font-poppins text-5xl hover:bg-red-button-hover ${
-                            selectedDifficulty === 'hard' ? 'ring-4 ring-red-outline' : ''
+                            selectedDifficulty === 'Hard' ? 'ring-4 ring-red-outline' : ''
                         }`}
-                        onClick={() => setSelectedDifficulty('hard')}
+                        onClick={() => setSelectedDifficulty('Hard')}
                     >
                         Hard
                     </button>
@@ -81,6 +83,9 @@ export default function MatchingWidget() {
                 >
                     Find Match
                 </button>
+                {isError && (
+                <p className="font-poppins text-text-error text-3xl font-medium m-1 pl-1">Please select a topic first!</p>
+                )}
                 
             </div>
         </div>
