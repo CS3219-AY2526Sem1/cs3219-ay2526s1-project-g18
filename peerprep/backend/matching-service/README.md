@@ -43,5 +43,5 @@ npm start
 
 ## API Endpoints
 
-- `POST /requests` - Add user to queue based on criteria
-- `DELETE /requests` - Remove user from queue based on criteria
+- `POST /requests` - Add user to queue based on criteria. Include user id, topic and difficulty in the request body.
+- `DELETE /requests` - Remove user from queue based on criteria. Include user id in the request body.

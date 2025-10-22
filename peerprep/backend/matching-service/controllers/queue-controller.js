@@ -5,7 +5,7 @@ export async function joinQueue(req, res) {
     try {
         // Retrieve user id and question criteria  
         const idKey = "users:" + req.body.id;
-        const queueCriteria = "queue:" + req.body.topic + ":" + req.body.difficulty;
+        const queueCriteria = "queue:specific:" + req.body.topic + ":" + req.body.difficulty;
 
         // Add user to Redis database if not already present
         const userExists = await client.exists(idKey);
@@ -45,6 +45,27 @@ export async function manualLeaveQueues(req, res) {
 
     } catch (err) {
         res.status(500).send("Redis server error");
+    }
+}
+
+// Add user to queue with topic but no difficulty with their key
+export async function joinNoDifficultyQueue(idKey) {
+    try {
+        const userExists = await client.exists(idKey);
+        if (userExists === 0) {
+            return console.error("User not in specific queue, cannot join no difficulty queue");    ;
+        }
+
+        const topic = getRawTopicString((await getQueueList(idKey))[0]);
+        const noDifficultyQueue = "queue:nodifficulty:" + topic;
+
+        await client.lPush(noDifficultyQueue, idKey);
+
+        var queueList = await getQueueList(idKey);
+        queueList.push(noDifficultyQueue);
+        await client.hSet(idKey, {queueList: JSON.stringify(queueList) });
+    } catch (err) {
+        console.error("Error joining no difficulty queue:", err);
     }
 }
 
@@ -102,25 +123,30 @@ export async function matchUsers(queueCriteria) {
         const id2 = getRawIdString(idKey2);
 
         // Remove "queue:" prefix to get question criteria
-        let questionTopic = getRawTopicString(queueCriteria);
+        let queueType = getRawQueueTypeString(queueCriteria);
+        let questionTopic = "";
         let difficulty = "";
 
-        if (questionTopic === "general") {
-            // Determine question criteria to use
-            const generalCriteria = await handleGeneralQueueCriteria(idKey1, idKey2);
-            questionTopic = generalCriteria.split(":")[0];
-            difficulty = generalCriteria.split(":")[1];
-
-            // Remove both users from specific queue also
-            await leaveQueues(idKey1);
-            await leaveQueues(idKey2);
-        } else {
-            difficulty = getRawDifficultyString(queueCriteria);
-
-            // Remove users from Redis database
-            await client.unlink(idKey1);
-            await client.unlink(idKey2);
-        }
+        switch (queueType) {
+            case "specific":
+                questionTopic = getRawTopicString(queueCriteria);
+                difficulty = getRawDifficultyString(queueCriteria);
+                break;
+            case "nodifficulty":
+                questionTopic = getRawTopicString(queueCriteria);
+                difficulty = await handleNoDifficultyQueueDifficulty(idKey1, idKey2);
+                break;
+            case "general":
+                const generalCriteria = await handleGeneralQueueCriteria(idKey1, idKey2);
+                questionTopic = generalCriteria.split(":")[0];
+                difficulty = generalCriteria.split(":")[1];
+                break;
+            default:
+                console.error("Unknown queue type:", queueType);
+                return;
+        }        
+        await leaveQueues(idKey1);
+        await leaveQueues(idKey2);
 
         console.log("Matched users:", id1, id2);
         return JSON.stringify([ id1, id2, questionTopic, difficulty ]);
@@ -130,14 +156,14 @@ export async function matchUsers(queueCriteria) {
     }
 }
 
-// Handle getting question criteria from general queue
+// Handle getting question criteria for general queue match
 export async function handleGeneralQueueCriteria(idKey1, idKey2) {
     try {
         // Get their question criteria
         const queueList1 = await getQueueList(idKey1);
         const queueList2 = await getQueueList(idKey2); 
-        const specificCriteria1 = queueList1.filter(q => q !== "queue:general")[0];
-        const specificCriteria2 = queueList2.filter(q => q !== "queue:general")[0];
+        const specificCriteria1 = queueList1.filter(q => q.startsWith("queue:specific"))[0];
+        const specificCriteria2 = queueList2.filter(q => q.startsWith("queue:specific"))[0];
 
         if (!specificCriteria1 || !specificCriteria2) {
             console.error("One or both users in general queue have no specific criteria");
@@ -163,6 +189,36 @@ export async function handleGeneralQueueCriteria(idKey1, idKey2) {
     }    
 }
 
+// Handle getting difficulty for no difficulty queue match
+export async function handleNoDifficultyQueueDifficulty(idKey1, idKey2) {
+    try {
+        // Get their question criteria
+        const queueList1 = await getQueueList(idKey1);
+        const queueList2 = await getQueueList(idKey2); 
+        const specificCriteria1 = queueList1.filter(q => q.startsWith("queue:specific"))[0];
+        const specificCriteria2 = queueList2.filter(q => q.startsWith("queue:specific"))[0];
+
+        if (!specificCriteria1 || !specificCriteria2) {
+            console.error("One or both users in no difficulty queue have no specific criteria");
+        }
+
+        // Take the easier difficulty
+        const difficulty1 = parseInt(getRawDifficultyString(specificCriteria1));
+        const difficulty2 = parseInt(getRawDifficultyString(specificCriteria2));
+        const difficulty = Math.min(difficulty1, difficulty2);
+
+        return difficulty;
+
+    } catch (err) {
+        console.error("Error handling no difficulty queue difficulty:", err);
+    }  
+}      
+
+export async function isInNoDifficultyQueue(idKey) {
+    const queueList = await getQueueList(idKey);
+    return queueList.some(q => q.startsWith("queue:nodifficulty"));
+}
+
 export async function isInGeneralQueue(idKey) {
     const queueList = await getQueueList(idKey);   
     return queueList.includes("queue:general");
@@ -183,15 +239,19 @@ async function getQueueList(idKey) {
   }
 }
 
-// Helper functions for formatting id and question criteria from Redis
+// Helper functions for formatting id, queue type and question criteria from Redis
 function getRawIdString(idKey) {
     return idKey.split(":")[1];
 }
 
-function getRawTopicString(queueCriteria) {
+function getRawQueueTypeString(queueCriteria) {
     return queueCriteria.split(":")[1];
 }    
 
-function getRawDifficultyString(queueCriteria) {
+function getRawTopicString(queueCriteria) {
     return queueCriteria.split(":")[2];
+}    
+
+function getRawDifficultyString(queueCriteria) {
+    return queueCriteria.split(":")[3];
 }
