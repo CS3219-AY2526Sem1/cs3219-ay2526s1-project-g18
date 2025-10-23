@@ -81,7 +81,7 @@ async function processUserTime(userIdKeys) {
             await client.hSet(idKey, "time", JSON.stringify(timeWaited + matchInterval / 1000)); // Increment by matchInterval in seconds
         }
     } catch (err) {
-        console.error("Error processing user times:", err);
+        console.error("Error processing user times: ", err);
     }        
 }
 

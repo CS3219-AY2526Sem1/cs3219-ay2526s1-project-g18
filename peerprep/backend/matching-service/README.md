@@ -43,5 +43,7 @@ npm start
 
 ## API Endpoints
 
-- `POST /requests` - Add user to queue based on criteria. Include user id, topic and difficulty in the request body.
+- `POST /requests`:
+    - Add user to queue based on criteria. Include user id, topic and difficulty in the request body.
+    - Difficulty is an integer string, with larger values being more difficult.
 - `DELETE /requests` - Remove user from queue based on criteria. Include user id in the request body.
