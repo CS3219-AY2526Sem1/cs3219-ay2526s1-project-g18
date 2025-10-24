@@ -1,0 +1,6 @@
+REDIS_CLOUD_URI=redis://default:1pgrWOIOQG7bCmAv89CKpFRH3J0l9ua1@redis-15708.c334.asia-southeast2-1.gce.redns.redis-cloud.com:15708
+REDIS_LOCAL_URI=redis://localhost:6379
+PORT=3002
+
+# Change to "PROD" for production, not "PROD" for local testing
+ENV=PROD
