@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, QuestionTopic, QuestionDifficulty } from '@prisma/client';
 import type { Question } from '../../generated/prisma/index.js';
 
 const prisma = new PrismaClient()
@@ -49,3 +49,21 @@ export const updateQuestion = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+
+export const getQuestionTopics = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const topics = Object.values(QuestionTopic);
+    res.json(topics);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getQuestionDifficulties = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const difficulties = Object.values(QuestionDifficulty);
+    res.json(difficulties);
+  } catch (error) {
+    next(error);
+  }
+};
