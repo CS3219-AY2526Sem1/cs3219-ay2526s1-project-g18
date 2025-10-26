@@ -1,7 +1,9 @@
-import client from "../server.js";
+import client from "../cloud-services/redis.js";
 import fs from "fs";
+import { sendToColloboration } from "../cloud-services/amqp.js";
+import { sendMatchNotification, sendTimeoutNotification, sendErrorNotification, registerSSEClient } from "./notification-controller.js";
 
-// Insert user id and question criteria into queue
+// Insert user id and question criteria into queue, register SSE connection
 export async function joinQueue(req, res) {
     try {
         if (req.body === null || typeof req.body === 'undefined' || Object.keys(req.body).length === 0) {
@@ -72,6 +74,8 @@ export async function manualLeaveQueues(req, res) {
         }
 
         await leaveQueues(idKey);
+        // Close SSE connection
+        closeSSEConnection(idKey);
         res.status(200).json({ message: "User removed from queue" });
 
     } catch (err) {
@@ -105,7 +109,7 @@ export async function joinGeneralQueue(idKey) {
     try {
         const userExists = await client.exists(idKey);
         if (userExists === 0) {
-            return console.error("User not in specific queue, cannot join general queue");    ;
+            return console.error("User not in specific queue, cannot join general queue");
         }
 
         await client.lPush("queue:general", idKey);
@@ -127,17 +131,29 @@ export async function leaveQueues(idKey) {
             console.error("No queueList found for user");
         } else {
             queueList = JSON.parse(queueListString);
+            for (const queueCriteria of queueList) {
+                await client.lRem(queueCriteria, 0, idKey);
+            }   
         }
-
-        for (const queueCriteria of queueList) {
-            await client.lRem(queueCriteria, 0, idKey);
-        }    
-
         await client.unlink(idKey);
     } catch (err) {
         console.error("Error leaving queues:", err);
     }
 }            
+
+export async function timeOutUser(idKey) {
+    try {
+        const userExists = await client.exists(idKey);
+        if (userExists === 0) {
+            return console.error("User not in queue, cannot timeout");
+        }
+
+        await leaveQueues(idKey);
+        sendTimeoutNotification(idKey);
+    } catch (err) {
+        console.error("Error timing out user:", err);
+    }
+}        
 
 // Match two users from queue and remove them from queue and database
 export async function matchUsers(queueCriteria) {
@@ -179,8 +195,12 @@ export async function matchUsers(queueCriteria) {
         await leaveQueues(idKey1);
         await leaveQueues(idKey2);
 
+        // Publish matched users and info, await consumption by colloboration-service
+        const collaborationMessage = JSON.stringify([ id1, id2, questionTopic, difficulty ]);
+        sendToColloboration(collaborationMessage);
+        sendMatchNotification(idKey1, { partnerId: id2, topic: questionTopic, difficulty: difficulty });
+        sendMatchNotification(idKey2, { partnerId: id1, topic: questionTopic, difficulty: difficulty });
         console.log("Matched users:", id1, id2);
-        return JSON.stringify([ id1, id2, questionTopic, difficulty ]);
 
     } catch (err) {
         console.error("Error matching users:", err);

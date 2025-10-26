@@ -1,5 +1,5 @@
-import client from './server.js';
-import { joinNoDifficultyQueue, joinGeneralQueue, leaveQueues, matchUsers, isInNoDifficultyQueue, isInGeneralQueue } from './controllers/queue-controller.js';
+import client from './cloud-services/redis.js';
+import { joinNoDifficultyQueue, joinGeneralQueue, matchUsers, isInNoDifficultyQueue, isInGeneralQueue, timeOutUser } from './controllers/queue-controller.js';
 
 const matchInterval = 1000; // in milliseconds
 
@@ -33,8 +33,7 @@ async function processQueues(queues) {
             let size = await client.lLen(queueCriteria);
             while (size > 1) {
                 try {
-                    const matchResults = await matchUsers(queueCriteria);
-                    processMatchmakingResults(matchResults);
+                    await matchUsers(queueCriteria);
                     size = await client.lLen(queueCriteria);
                 } catch (err) {
                     console.error("Error matching users in queue:", err);
@@ -64,7 +63,7 @@ async function processUserTime(userIdKeys) {
             
             if (timeWaited >= maxQueueTime) {
                 console.log(`User waiting for more than %d seconds, removing from all queues`, maxQueueTime);
-                await leaveQueues(idKey);
+                await timeOutUser(idKey);
                 continue;
             }
 
@@ -83,11 +82,4 @@ async function processUserTime(userIdKeys) {
     } catch (err) {
         console.error("Error processing user times: ", err);
     }        
-}
-
-function processMatchmakingResults(results) {
-    // To be implemented: Send notifications to matched users
-    // Retrieve question id from question service
-    // Send user ids and question id to collaboration service
-    console.log("Matched users:", results);
 }
