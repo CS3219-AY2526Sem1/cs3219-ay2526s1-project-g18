@@ -3,4 +3,4 @@ REDIS_LOCAL_URI=redis://localhost:6379
 PORT=3002
 
 # Change to "PROD" for production, not "PROD" for local testing
-ENV=PROD
+ENV=TESTING
