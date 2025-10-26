@@ -1,4 +1,5 @@
 import client from "../server.js";
+import fs from "fs";
 
 // Insert user id and question criteria into queue
 export async function joinQueue(req, res) {
@@ -33,21 +34,15 @@ export async function joinQueue(req, res) {
         const idKey = "users:" + req.body.id;
         const queueCriteria = "queue:specific:" + req.body.topic + ":" + req.body.difficulty;
 
-        // Add user to Redis database if not already present
-        const userExists = await client.exists(idKey);
-        if (userExists === 0) {
-            await client.hSet(idKey, {
-                 time: JSON.stringify(0), 
-                 queueList: JSON.stringify([ queueCriteria ]) 
-            });
+        // Use Lua script to atomically check if user is already in a queue and add them if not
+        const lua = fs.readFileSync("./lua-scripts/join-queue.lua", "utf8");
+        const added = await client.eval(lua, { keys: [idKey, queueCriteria], arguments: ["0", JSON.stringify([queueCriteria])] });
+
+        if (added === 1) {
+            return res.status(200).json({ message: "User added to queue" });
         } else {
             return res.status(400).json({ message: "user already in queue" });
         }
-
-        // Push user to Redis queue
-        await client.lPush(queueCriteria, idKey);
-
-        res.status(200).json({ message: "User added to queue" });
 
     } catch (err) { 
         console.error("Error joining queue: ", err);
@@ -89,7 +84,7 @@ export async function joinNoDifficultyQueue(idKey) {
     try {
         const userExists = await client.exists(idKey);
         if (userExists === 0) {
-            return console.error("User not in specific queue, cannot join no difficulty queue");    ;
+            return console.error("User not in specific queue, cannot join no difficulty queue");
         }
 
         const topic = getRawTopicString((await getQueueList(idKey))[0]);
