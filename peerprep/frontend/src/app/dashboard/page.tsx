@@ -1,34 +1,20 @@
-"use client"
+"use client";
 import UserWidget from "./widgets/userWidget"
 import MatchingWidget from "./widgets/matchingWidget"
 import QuestionHistoryWidget from "./widgets/questionHistWidget"
-import React, { use, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 
 
 
-// first get the user details (name, status) from session storage
-// function getUserDetails() {
-//   useEffect(() => {
-//       const router = useRouter();
-//       const user = sessionStorage.getItem("user");
-//       if (!user) {
-//           router.push("/");
-//           console.error("You must be logged in to access this page.");
-//       }
-//       const parsedUser = JSON.parse(user || "{}");
-//       userName = parsedUser.username || "User";
-//       userStatus = "Online";
-//   }, [])
-// }
 
 //dummy user details
-const dummyUser = JSON.stringify({
-    id: 1,
-    username: "coolguy123"
-})
-const token = "dummyToken" 
+// const dummyUser = JSON.stringify({
+//     id: 1,
+//     username: "coolguy123"
+// })
+// const token = "dummyToken" 
 
 
 
@@ -37,17 +23,18 @@ export default function DashboardPage() {
   const[user, setUser] = useState<any>(null)
   const[token,setToken] = useState<string>("")
   const[userName, setUserName] =  useState<string>("")
+  const[userId, setUserId] = useState<number | null>(null)
 
-
+ // Make sure user is logged in + get userId and also userName
   useEffect(() => {
-        //const user = sessionStorage.getItem("user");
-        //const token = sessionStorage.getItem("token");
-        // if (!user || !token) {
-        //     router.push("/");
-        //     console.error("You must be logged in to access this page.");
-        // } else {
+        const user = sessionStorage.getItem("user");
+        const token = sessionStorage.getItem("token");
+        if (!user || !token) {
+            router.push("/");
+            console.error("You must be logged in to access this page.");
+        } else {
           
-            const parsedUser = JSON.parse(dummyUser);
+            const parsedUser = JSON.parse(user);
             setUser(parsedUser);
             setToken(token);
             if (!parsedUser.id || !parsedUser.username ) {
@@ -55,8 +42,9 @@ export default function DashboardPage() {
                 console.error("Invalid user data in session storage:", parsedUser);
             } else {
                 setUserName(parsedUser.username);
+                setUserId(parseInt(parsedUser.id));
             }
-        // }
+        }
     }, [])
   return (
     <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12">

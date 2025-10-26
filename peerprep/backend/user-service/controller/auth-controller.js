@@ -1,6 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { findUserByUsernameOrEmail as _findUserByUsernameOrEmail } from "../model/repository.js";
+import { 
+  findUserByUsernameOrEmail as _findUserByUsernameOrEmail,
+  createUser as _createUser,
+ } from "../model/repository.js";
 import { formatUserResponse } from "./user-controller.js";
 
 export async function handleLogin(req, res) {
