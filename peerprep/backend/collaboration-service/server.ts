@@ -3,9 +3,8 @@ import index from "./index.js";
 import "dotenv/config";
 import redis from "redis";
 
-const port = process.env.PORT || 3002;
-
-export const server = http.createServer(index);
+const server = http.createServer(index);
+const port = process.env.PORT || 3003;
 
 // Determine Redis URI based on environment
 let redisUri =
@@ -17,9 +16,9 @@ export const client = redis.createClient({ url: redisUri });
 async function connectRedis() {
   try {
     await client.connect();
-    console.log("Matching service connected to Redis!");
+    console.log("Collaboration service connected to Redis!");
   } catch (err) {
-    console.error("Error connecting matching service to Redis:", err);
+    console.error("Error connecting collaboration service to Redis:", err);
     process.exit(1);
   }
 }
@@ -27,6 +26,7 @@ async function connectRedis() {
 await connectRedis();
 
 server.listen(port);
-console.log("Matching service server listening on http://localhost:" + port);
+console.log("Collaboration service server listening on http://localhost:" + port);
 
 export default server;
+
