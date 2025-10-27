@@ -1,13 +1,13 @@
 import express from 'express';
 import cors from 'cors';
-import collaborationRoutes from './routes/collaborationRoutes.ts';
+import collaborationRoutes from './routes/collaborationRoutes.js';
 
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors()); // config cors so that front-end can use
-app.options("*", cors());
+app.options(/.*/, cors());
 
 // To handle CORS Errors
 app.use((req, res, next) => {

@@ -1,8 +1,11 @@
+"use client";
+import io from "socket.io-client";
+
 const user = sessionStorage.getItem("user");
 const parsedUser = user ? JSON.parse(user) : null;
 const token = sessionStorage.getItem("token");
 
-const socket = io('http://localhost:3003', {auth: { token: token }, autoConnect: false});
+export const socket = io('http://localhost:3003', {auth: { token: token }, autoConnect: false});
 socket.on("connect", () => { 
     console.log("Connected to socket", socket.id); 
 });

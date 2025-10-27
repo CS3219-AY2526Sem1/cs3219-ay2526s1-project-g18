@@ -1,6 +1,5 @@
-import { client } from '../server';
+import { client, io } from '../server.js';
 import { v4 } from 'uuid';
-import { io } from '../socket/socket.ts';
 
 export async function createRoom(req, res) {
   try {

@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { socket } from "../socket/socket"
 
 const default_topic = "Arrays";
 const default_difficulty = "Easy";
@@ -81,6 +82,7 @@ export default function MatchingNotificationsPage() {
 
             const text = await response.text().catch(() => "");
             console.log("Left queue (server text):", text);
+            socket.disconnect();
         } catch (error) {
             console.error("Error leaving match queue:", error);
             throw error;
@@ -92,9 +94,13 @@ export default function MatchingNotificationsPage() {
     // Do it once userId is set (uses dummy for now until containerized and auth works)
     useEffect(() => {
         if (dummy_userId && topic && difficulty) {
-            joinMatchQueue(dummy_userId, topic, difficulty).catch((error) => {
+            try {
+                joinMatchQueue(dummy_userId, topic, difficulty)
+                console.log('Joining match queue...');
+                socket.connect();
+            } catch (error) {
                 console.error('Error joining queue:', error);
-            });
+            };
         }
     }, [userId, topic, difficulty]);
     return (

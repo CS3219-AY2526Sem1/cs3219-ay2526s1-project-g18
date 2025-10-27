@@ -1,7 +1,7 @@
 import http from "http";
 import index from "./index.js";
-import "dotenv/config";
 import redis from "redis";
+import { Server } from "socket.io";
 
 const server = http.createServer(index);
 const port = process.env.PORT || 3003;
@@ -27,6 +27,10 @@ await connectRedis();
 
 server.listen(port);
 console.log("Collaboration service server listening on http://localhost:" + port);
+
+export const io = new Server(server, {
+    cors: { origin: "*" }
+});
 
 export default server;
 
