@@ -1,4 +1,5 @@
-import { CLOSE_EVENT, ERROR_EVENT, MATCH_EVENT, TIMEOUT_EVENT } from '../util/sse-event-names.js';
+import { CLOSE_EVENT, ERROR_EVENT, JOIN_GENERAL_QUEUE_EVENT, JOIN_NO_DIFFICULTY_QUEUE_EVENT, MATCH_EVENT, TIMEOUT_EVENT } from '../util/sse-event-names.js';
+import { leaveQueues } from './queue-controller.js';
 
 const sseClients = new Map(); // key: idKey (users:{id}), value: res object
 
@@ -63,6 +64,33 @@ export async function sendTimeoutNotification(idKey) {
         console.error("Error sending timeout notification for user:", idKey, err);
     }
 }
+
+export async function sendJoinNoDifficultyNotification(idKey) {
+    try {
+        const clientRes = sseClients.get(idKey);
+        if (clientRes) {
+            safeWrite(clientRes, `event: ${JOIN_NO_DIFFICULTY_QUEUE_EVENT}\ndata: \n\n`);
+        } else {
+            console.error("No SSE client found for user:", idKey);
+        }
+    } catch (err) {
+        console.error("Error sending timeout notification for user:", idKey, err);
+    }
+}
+
+export async function sendJoinGeneralNotification(idKey) {
+    try {
+        const clientRes = sseClients.get(idKey);
+        if (clientRes) {
+            safeWrite(clientRes, `event: ${JOIN_GENERAL_QUEUE_EVENT}\ndata: \n\n`);
+        } else {
+            console.error("No SSE client found for user:", idKey);
+        }
+    } catch (err) {
+        console.error("Error sending timeout notification for user:", idKey, err);
+    }
+}
+
 
 export async function sendErrorNotification(idKey, errorPayload) {
     try {

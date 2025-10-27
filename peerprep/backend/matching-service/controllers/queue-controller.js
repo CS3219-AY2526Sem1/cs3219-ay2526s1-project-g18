@@ -1,7 +1,8 @@
 import client from "../cloud-services/redis.js";
 import fs from "fs";
-import { sendToColloboration } from "../cloud-services/amqp.js";
-import { sendMatchNotification, sendTimeoutNotification, sendErrorNotification, registerSSEClient } from "./notification-controller.js";
+import { sendMatchNotification, sendTimeoutNotification, sendJoinNoDifficultyNotification, sendJoinGeneralNotification, sendErrorNotification } from "./notification-controller.js";
+
+const COLLAB_API_BASE = "http://localhost:3003";
 
 // Insert user id and question criteria into queue, register SSE connection
 export async function joinQueue(req, res) {
@@ -98,7 +99,8 @@ export async function joinNoDifficultyQueue(idKey) {
 
         var queueList = await getQueueList(idKey);
         queueList.push(noDifficultyQueue);
-        await client.hSet(idKey, {queueList: JSON.stringify(queueList) });
+        await client.hSet(idKey, { queueList: JSON.stringify(queueList) });
+        sendJoinNoDifficultyNotification(idKey);
     } catch (err) {
         console.error("Error joining no difficulty queue:", err);
     }
@@ -116,8 +118,8 @@ export async function joinGeneralQueue(idKey) {
 
         var queueList = await getQueueList(idKey);
         queueList.push("queue:general");
-        await client.hSet(idKey, {queueList: JSON.stringify(queueList) });
-
+        await client.hSet(idKey, { queueList: JSON.stringify(queueList) });
+        sendJoinGeneralNotification(idKey);
     } catch (err) {
         console.error("Error joining general queue:", err);
     }        
@@ -195,12 +197,7 @@ export async function matchUsers(queueCriteria) {
         await leaveQueues(idKey1);
         await leaveQueues(idKey2);
 
-        // Publish matched users and info, await consumption by colloboration-service
-        const collaborationMessage = JSON.stringify([ id1, id2, questionTopic, difficulty ]);
-        sendToColloboration(collaborationMessage);
-        sendMatchNotification(idKey1, { partnerId: id2, topic: questionTopic, difficulty: difficulty });
-        sendMatchNotification(idKey2, { partnerId: id1, topic: questionTopic, difficulty: difficulty });
-        console.log("Matched users:", id1, id2);
+        await notifyCollabService(questionTopic, difficulty, id1, id2, idKey1, idKey2);
 
     } catch (err) {
         console.error("Error matching users:", err);
@@ -264,6 +261,34 @@ export async function handleNoDifficultyQueueDifficulty(idKey1, idKey2) {
         console.error("Error handling no difficulty queue difficulty:", err);
     }  
 }      
+
+async function notifyCollabService(topic, difficulty, id1, id2, idKey1, idKey2) {
+    const body = { topic: topic, difficulty: difficulty, userId1: id1, userId2: id2 };
+    try{
+        const response = await fetch(`${COLLAB_API_BASE}/create-room`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const txt = await response.text().catch(() => "");
+            sendErrorNotification(idKey1, `Error creating collaboration room (${response.status})`);
+            sendErrorNotification(idKey2, `Error creating collaboration room (${response.status})`);
+            console.error("Collaboration service error:", response.status, txt);
+        } else {
+            sendMatchNotification(idKey1, { partnerId: id2, topic: questionTopic, difficulty: difficulty });
+            sendMatchNotification(idKey2, { partnerId: id1, topic: questionTopic, difficulty: difficulty });
+            console.log("Matched users:", id1, id2);
+        }
+
+    } catch (err) {
+        console.error("Error contacting collaboration service:", err);
+        sendErrorNotification(idKey1, "Error notifying collaboration service");
+        sendErrorNotification(idKey2, "Error notifying collaboration service");
+        return;
+    }
+}
 
 export async function isInNoDifficultyQueue(idKey) {
     const queueList = await getQueueList(idKey);
