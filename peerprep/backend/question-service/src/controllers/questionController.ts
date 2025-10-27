@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { PrismaClient, QuestionTopic, QuestionDifficulty } from '@prisma/client';
-import type { Question } from '../../generated/prisma/index.js';
+import type { Question } from '@prisma/client';
 
 const prisma = new PrismaClient()
 

@@ -5,7 +5,7 @@ import {
   updateQuestion,
   getQuestionTopics,
   getQuestionDifficulties
-} from '../controllers/questionController.ts';
+} from '../controllers/questionController.js';
 
 const router = Router();
 
