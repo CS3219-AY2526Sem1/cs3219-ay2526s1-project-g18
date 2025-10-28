@@ -1,32 +1,39 @@
-import client from './server.js';
-import { joinGeneralQueue, leaveQueues, matchUsers, isInGeneralQueue } from './controllers/queue-controller.js';
+import client from './cloud-services/redis.js';
+import { joinNoDifficultyQueue, joinGeneralQueue, matchUsers, isInNoDifficultyQueue, isInGeneralQueue, timeOutUser } from './controllers/queue-controller.js';
+
+const matchInterval = 1000; // in milliseconds
 
 // Matchmaker function to run periodically
 export function runMatchmaker() {
     setInterval(async () => {
         try {
-            console.log("Running matchmaker...");
-            const existingQueues = await client.keys("queue:*");
-            await processQueues(existingQueues);
+            //console.log("Running matchmaker...");
 
-            // Increment time waited for all users left in queues by 5 seconds
+            // Process queues in order from most specific to least
+            const specificQueues = await client.keys("queue:specific:*");
+            await processQueues(specificQueues);
+            const noDifficultyQueues = await client.keys("queue:nodifficulty:*");
+            await processQueues(noDifficultyQueues);
+            const generalQueue = await client.keys("queue:general");
+            await processQueues(generalQueue);
+
+            // Increment time waited for all users left in queues and add to queues if needed
             const userIdKeys = await client.keys("users:*");
             await processUserTime(userIdKeys);
         } catch (err) {
             console.error("Error in matchmaker:", err);
         }
-    }, 5000); // Run every 5 seconds
+    }, matchInterval);
 }        
 
 //Process exiting queues, match users in each queue if size > 1, handle general queue
-async function processQueues(existingQueues) {
+async function processQueues(queues) {
     try {
-        for (const queueCriteria of existingQueues) {
+        for (const queueCriteria of queues) {
             let size = await client.lLen(queueCriteria);
             while (size > 1) {
                 try {
-                    const matchResults = await matchUsers(queueCriteria);
-                    processMatchmakingResults(matchResults);
+                    await matchUsers(queueCriteria);
                     size = await client.lLen(queueCriteria);
                 } catch (err) {
                     console.error("Error matching users in queue:", err);
@@ -42,33 +49,37 @@ async function processQueues(existingQueues) {
 // Handle incrementing time for users, removal and adding to general queue
 async function processUserTime(userIdKeys) {
     try {
-        const generalQueueTime = 300; // 5 minutes
-        const maxQueueTime = 600; // 10 minutes
+        // Times here are in seconds
+        const noDifficultyQueueTime = 45;
+        const generalQueueTime = 75;
+        const maxQueueTime = 105;
         for (const idKey of userIdKeys) {
             const timeWaitedString = await client.hGet(idKey, "time");
+            if (!timeWaitedString) {
+                console.error("No time field for user:", idKey);
+                continue;
+            }
             const timeWaited = JSON.parse(timeWaitedString);
             
-            if (timeWaited < maxQueueTime) {
-                if (timeWaited > generalQueueTime && !(await isInGeneralQueue(idKey))) {
-                    // User has waited more than 5 minutes, add to general queue
-                    console.log("User waiting for more than 5 minutes, adding to general queue");
-                    await joinGeneralQueue(idKey);
-                }
-                await client.hSet(idKey, "time", JSON.stringify(timeWaited + 5));
-            } else {
-                // User has waited more than 10 minutes, remove from all queues
-                console.log("User waiting for more than 10 minutes, removing from all queues");
-                await leaveQueues(idKey);
+            if (timeWaited >= maxQueueTime) {
+                console.log(`User waiting for more than %d seconds, removing from all queues`, maxQueueTime);
+                await timeOutUser(idKey);
+                continue;
             }
+
+            if (timeWaited >= noDifficultyQueueTime && !(await isInNoDifficultyQueue(idKey))) {
+                console.log(`User waiting for more than %d seconds, adding to no difficulty queue`, noDifficultyQueueTime);
+                await joinNoDifficultyQueue(idKey);
+            }
+
+            if (timeWaited >= generalQueueTime && !(await isInGeneralQueue(idKey))) {
+                console.log(`User waiting for more than %d, adding to general queue`, generalQueueTime);
+                await joinGeneralQueue(idKey);
+            }    
+
+            await client.hSet(idKey, "time", JSON.stringify(timeWaited + matchInterval / 1000)); // Increment by matchInterval in seconds
         }
     } catch (err) {
-        console.error("Error processing user times:", err);
+        console.error("Error processing user times: ", err);
     }        
-}
-
-function processMatchmakingResults(results) {
-    // To be implemented: Send notifications to matched users
-    // Retrieve question id from question service
-    // Send user ids and question id to collaboration service
-    console.log("Matched users:", results);
 }
