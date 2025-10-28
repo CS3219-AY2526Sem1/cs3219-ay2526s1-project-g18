@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import requestRoute from "./routes/request-route.js";
+import notificationRoute from "./routes/notification-route.js";
 import { runMatchmaker } from "./matchmaker.js";
 
 const app = express();
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/", requestRoute);
+app.use("/", notificationRoute);
 
 app.get("/", (req, res, next) => {
   console.log("Sending Greetings!");
