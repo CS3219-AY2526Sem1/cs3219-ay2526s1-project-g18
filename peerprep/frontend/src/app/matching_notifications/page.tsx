@@ -94,13 +94,14 @@ export default function MatchingNotificationsPage() {
     // Do it once userId is set (uses dummy for now until containerized and auth works)
     useEffect(() => {
         if (dummy_userId && topic && difficulty) {
-            try {
-                joinMatchQueue(dummy_userId, topic, difficulty)
-                console.log('Joining match queue...');
+            joinMatchQueue(dummy_userId, topic, difficulty)
+            .then(() => {
+                console.log('Successfully joined match queue');
                 socket.connect();
-            } catch (error) {
+            })
+            .catch((error) => {
                 console.error('Error joining queue:', error);
-            };
+            });
         }
     }, [userId, topic, difficulty]);
     return (
