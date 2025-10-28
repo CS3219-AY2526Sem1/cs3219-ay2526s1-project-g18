@@ -1,6 +1,6 @@
 import client from "../cloud-services/redis.js";
 import fs from "fs";
-import { sendMatchNotification, sendTimeoutNotification, sendJoinNoDifficultyNotification, sendJoinGeneralNotification, sendErrorNotification } from "./notification-controller.js";
+import { sendMatchNotification, sendTimeoutNotification, sendJoinNoDifficultyNotification, sendJoinGeneralNotification, sendErrorNotification, closeSSEConnection} from "./notification-controller.js";
 
 const COLLAB_API_BASE = "http://localhost:3003";
 
