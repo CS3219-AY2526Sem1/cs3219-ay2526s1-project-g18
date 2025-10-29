@@ -1,14 +1,15 @@
 // Main matching page (displayed when matching service is first invoked)
 // start matching service
 "use client"
-import { useState, useEffect, useRef} from "react";
+import { useState, useEffect, useRef, use} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigationGuard, NavigationGuardProvider } from "next-navigation-guard";
 import { X } from "lucide-react";
 
 const default_topic = "Arrays";
 const default_difficulty = "Easy";
-const dummy_userId = 999;
 const MATCHING_API_BASE = "http://localhost:3002";
+
 
 const difficultyInInt = (difficulty: any): string => {
     if (!difficulty) return "0";
@@ -30,8 +31,17 @@ export default function MatchingNotificationsPage() {
     const searchParams = useSearchParams();
     const topic = searchParams?.get("topic") ?? default_topic;
     const difficulty = String(searchParams?.get("difficulty")) ?? default_difficulty;
-    const hasJoinedQueue = useRef(false);
+    const isDifficultyButtonClicked = useRef(false);
 
+    const hasJoinedQueue = useRef(false); 
+
+    const onDisconnectButton = () => {
+        // After leaving queue, allow navigation
+        hasJoinedQueue.current = false;
+        isDifficultyButtonClicked.current = true;
+        leaveMatchQueue(userId);
+        router.push("/dashboard");
+    }
 
     const router = useRouter();
     //Make sure user is logged in + get userId
@@ -53,6 +63,7 @@ export default function MatchingNotificationsPage() {
                 }
             }
         }, [])
+
     // Start matching service call here using userId
     async function joinMatchQueue(userId: string | number, topic: string, difficulty: string) {
         const body = { id: String(userId), topic, difficulty: difficultyInInt(difficulty) };
@@ -79,6 +90,8 @@ export default function MatchingNotificationsPage() {
         }
     }
 
+
+
     // End matching service call here using userId
     async function leaveMatchQueue(userId: string | number | null) {
         if (!userId) {
@@ -100,14 +113,30 @@ export default function MatchingNotificationsPage() {
 
             const text = await response.text().catch(() => "");
             console.log("Left queue (server text):", text);
-            router.push('/dashboard'); // only navigate after success
         } catch (error) {
             console.error("Error leaving match queue:", error);
             // show UI feedback if you want (toast/modal)
         }
     }
 
-    // Do it once userId is set (uses dummy for now until containerized and auth works)
+     useNavigationGuard({
+    // enabled can be boolean or function; function reads the ref dynamically
+    enabled: () => hasJoinedQueue.current,
+
+    // confirm can be async and should return true (proceed) or false (reject)
+    confirm: async () => {
+        // synchronous native confirm (blocks JS until user responds)
+        const ok = window.confirm("Confirm leave page? You may take longer to get a match");
+        if (!ok) return false;             // user cancelled => do NOT navigate
+
+        // user confirmed: do server cleanup (await it) before allowing navigation
+        if (isDifficultyButtonClicked.current == false) await leaveMatchQueue(userId);
+        return true;                       // allow navigation to proceed
+    },
+    });
+
+
+    // Do it once userId is set
     useEffect(() => {
 
         if (userId && topic && difficulty && !hasJoinedQueue.current) {
@@ -117,6 +146,7 @@ export default function MatchingNotificationsPage() {
             });
         }
     }, [userId, topic, difficulty]);
+
     return (
         <div className="bg-dark-blue-bg h-screen w-screen flex flex-col justify-center items-center pt-7 pl-12 pr-12">
             <div className="bg-darkest-box w-5xl rounded-3xl flex flex-col justify-center items-center p-6 gap-4">
@@ -156,7 +186,7 @@ export default function MatchingNotificationsPage() {
                 </div>
                 <button className="bg-red-button p-3 font-poppins text-2xl text-text-red-button rounded-lg mt-5 flex items-center gap-2
                 hover:bg-red-button-hover hover:text-white"
-                onClick={() => {leaveMatchQueue(userId)}}>
+                onClick={() => {onDisconnectButton();}}>
                     <X className="w-8 h-8" />
                     <span>Disconnect</span>
                 </button>
