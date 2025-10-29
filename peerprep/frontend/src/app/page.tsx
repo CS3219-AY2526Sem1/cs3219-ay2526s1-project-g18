@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useRef, useState } from "react";
 import { BiSolidRightArrow } from "react-icons/bi"
 import { useRouter } from "next/navigation";
+import { initSocket } from "./socket/socket";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function LoginPage() {
         // store user info in session storage so it can be used in other components
         sessionStorage.setItem("token", accessToken);
         sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
+        initSocket();
         router.push("/dashboard");
 
       } else if (response.status === 401) {

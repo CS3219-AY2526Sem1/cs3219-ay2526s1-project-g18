@@ -12,15 +12,20 @@ export async function createRoom(req, res) {
         inUse: 'false',
         users: JSON.stringify([])
     })
+    console.log(`Created room ${roomId} for topic ${topic} at difficulty ${difficulty}`);
 
     const socketId1 = await client.get(`userSocket:${userId1}`);
+    console.log(`Fetched socket ID for user ${userId1}: ${socketId1}`);
     const socketId2 = await client.get(`userSocket:${userId2}`);
+    console.log(`Fetched socket ID for user ${userId2}: ${socketId2}`);
     
     if (socketId1) {
         io.to(socketId1).emit("roomCreated", { roomId: roomId });
+        console.log(`Emitted roomCreated to socket ${socketId1} for user ${userId1}`);
     }
     if (socketId2) {
         io.to(socketId2).emit("roomCreated", { roomId: roomId });
+        console.log(`Emitted roomCreated to socket ${socketId2} for user ${userId2}`);
     }
 
     return res.status(200); 

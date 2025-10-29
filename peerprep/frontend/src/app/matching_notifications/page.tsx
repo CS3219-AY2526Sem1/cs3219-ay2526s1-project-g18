@@ -4,12 +4,13 @@
 import { useState, useEffect, useRef} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
-import { socket } from "../socket/socket"
+import { getSocket } from "@/app/socket/socket";
 
 const default_topic = "Arrays";
 const default_difficulty = "Easy";
 const dummy_userId = 999;
 const MATCHING_API_BASE = "http://localhost:3002";
+const socket = getSocket();
 
 const difficultyInInt = (difficulty: any): string => {
     if (!difficulty) return "0";
@@ -26,7 +27,7 @@ const difficultyInInt = (difficulty: any): string => {
 };
 
 export default function MatchingNotificationsPage() {
-    const[userId, setUserId] = useState<number |null>(null);
+    const[userId, setUserId] = useState<string |null>(null);
     const[user, setUser] = useState<any>(null)
     const searchParams = useSearchParams();
     const topic = searchParams?.get("topic") ?? default_topic;
@@ -50,7 +51,7 @@ export default function MatchingNotificationsPage() {
                     router.push("/");
                     console.error("Invalid user data in session storage:", parsedUser);
                 } else {
-                    setUserId(parseInt(parsedUser.id));
+                    setUserId(parsedUser.id);
                 }
             }
         }, [])
@@ -67,6 +68,7 @@ export default function MatchingNotificationsPage() {
             // server returns plain text on success
             if (!response.ok) {
                 const txt = await response.text().catch(() => "");
+
                 throw new Error(txt || `Failed to join queue (${response.status})`);
             }
             hasJoinedQueue.current = true;
@@ -101,7 +103,7 @@ export default function MatchingNotificationsPage() {
 
             const text = await response.text().catch(() => "");
             console.log("Left queue (server text):", text);
-            socket.disconnect();
+            socket?.disconnect();
             router.push('/dashboard'); // only navigate after success
         } catch (error) {
             console.error("Error leaving match queue:", error);
@@ -116,7 +118,7 @@ export default function MatchingNotificationsPage() {
             joinMatchQueue(userId, topic, difficulty)
             .then(() => {
                 console.log('Successfully joined match queue');
-                socket.connect();
+                socket?.connect();
             })
             .catch((error) => {
                 console.error('Error joining queue:', error);
