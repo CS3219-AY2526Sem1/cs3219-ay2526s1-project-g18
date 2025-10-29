@@ -1,7 +1,7 @@
 // Main matching page (displayed when matching service is first invoked)
 // start matching service
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { socket } from "../socket/socket"
@@ -11,37 +11,52 @@ const default_difficulty = "Easy";
 const dummy_userId = 999;
 const MATCHING_API_BASE = "http://localhost:3002";
 
+const difficultyInInt = (difficulty: any): string => {
+    if (!difficulty) return "0";
+    switch (difficulty.toLowerCase()) {
+        case "easy":
+            return "0";
+        case "medium":
+            return "1";
+        case "hard":
+            return "2";
+        default:
+            return "0";
+    }
+};
+
 export default function MatchingNotificationsPage() {
-    const[userId, setUserId] = useState<number | null>(null)
+    const[userId, setUserId] = useState<number |null>(null);
     const[user, setUser] = useState<any>(null)
     const searchParams = useSearchParams();
     const topic = searchParams?.get("topic") ?? default_topic;
-    const difficulty = searchParams?.get("difficulty") ?? default_difficulty;
+    const difficulty = String(searchParams?.get("difficulty")) ?? default_difficulty;
+    const hasJoinedQueue = useRef(false);
 
 
     const router = useRouter();
-    // Make sure user is logged in + get userId
-    //   useEffect(() => {
-    //         const user = sessionStorage.getItem("user");
-    //         const token = sessionStorage.getItem("token");
-    //         if (!user || !token) {
-    //             router.push("/");
-    //             console.error("You must be logged in to access this page.");
-    //         } else {
+    //Make sure user is logged in + get userId
+      useEffect(() => {
+            const user = sessionStorage.getItem("user");
+            const token = sessionStorage.getItem("token");
+            if (!user || !token) {
+                router.push("/");
+                console.error("You must be logged in to access this page.");
+            } else {
               
-    //             const parsedUser = JSON.parse(user);
-    //             setUser(parsedUser);
-    //             if (!parsedUser.id || !parsedUser.username ) {
-    //                 router.push("/");
-    //                 console.error("Invalid user data in session storage:", parsedUser);
-    //             } else {
-    //                 setUserId(parseInt(parsedUser.id));
-    //             }
-    //         }
-    //     }, [])
+                const parsedUser = JSON.parse(user);
+                setUser(parsedUser);
+                if (!parsedUser.id || !parsedUser.username ) {
+                    router.push("/");
+                    console.error("Invalid user data in session storage:", parsedUser);
+                } else {
+                    setUserId(parseInt(parsedUser.id));
+                }
+            }
+        }, [])
     // Start matching service call here using userId
     async function joinMatchQueue(userId: string | number, topic: string, difficulty: string) {
-        const body = { id: String(userId), topic, difficulty };
+        const body = { id: String(userId), topic, difficulty: difficultyInInt(difficulty) };
         try{
             const response = await fetch(`${MATCHING_API_BASE}/requests`, {
                 method: "POST",
@@ -54,6 +69,7 @@ export default function MatchingNotificationsPage() {
                 const txt = await response.text().catch(() => "");
                 throw new Error(txt || `Failed to join queue (${response.status})`);
             }
+            hasJoinedQueue.current = true;
 
             const text = await response.text().catch(() => "");
             console.log("Server response (text):", text);
@@ -65,9 +81,12 @@ export default function MatchingNotificationsPage() {
     }
 
     // End matching service call here using userId
-    async function leaveMatchQueue(userId: string | number) {
+    async function leaveMatchQueue(userId: string | number | null) {
+        if (!userId) {
+        console.error("No userId provided to leaveMatchQueue");
+        return;
+        }
         const body = { id: String(userId) };
-
         try {
             const response = await fetch(`${MATCHING_API_BASE}/requests`, {
                 method: "DELETE",
@@ -83,24 +102,25 @@ export default function MatchingNotificationsPage() {
             const text = await response.text().catch(() => "");
             console.log("Left queue (server text):", text);
             socket.disconnect();
+            router.push('/dashboard'); // only navigate after success
         } catch (error) {
             console.error("Error leaving match queue:", error);
-            throw error;
+            // show UI feedback if you want (toast/modal)
         }
-        router.push('/dashboard')
     }
-
 
     // Do it once userId is set (uses dummy for now until containerized and auth works)
     useEffect(() => {
-        if (dummy_userId && topic && difficulty) {
-            joinMatchQueue(dummy_userId, topic, difficulty)
+
+        if (userId && topic && difficulty && !hasJoinedQueue.current) {
+            joinMatchQueue(userId, topic, difficulty)
             .then(() => {
                 console.log('Successfully joined match queue');
                 socket.connect();
             })
             .catch((error) => {
                 console.error('Error joining queue:', error);
+                hasJoinedQueue.current = false; // reset so we can try again
             });
         }
     }, [userId, topic, difficulty]);
@@ -143,7 +163,7 @@ export default function MatchingNotificationsPage() {
                 </div>
                 <button className="bg-red-button p-3 font-poppins text-2xl text-text-red-button rounded-lg mt-5 flex items-center gap-2
                 hover:bg-red-button-hover hover:text-white"
-                onClick={() => {leaveMatchQueue(dummy_userId)}}>
+                onClick={() => {leaveMatchQueue(userId)}}>
                     <X className="w-8 h-8" />
                     <span>Disconnect</span>
                 </button>
