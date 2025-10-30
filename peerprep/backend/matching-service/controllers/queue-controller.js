@@ -197,7 +197,12 @@ export async function matchUsers(queueCriteria) {
         await leaveQueues(idKey1);
         await leaveQueues(idKey2);
 
-        await notifyCollabService(questionTopic, difficulty, id1, id2, idKey1, idKey2);
+        //await notifyCollabService(questionTopic, difficulty, id1, id2, idKey1, idKey2); // temp disable till collab is up
+        // TO DELETE WHEN COLLAB IS UP
+        sendMatchNotification(idKey1, { partnerId: id2, topic: questionTopic, difficulty: difficulty });
+        sendMatchNotification(idKey2, { partnerId: id1, topic: questionTopic, difficulty: difficulty });
+        console.log("Matched users:", id1, id2);
+        // TO DELETE WHEN COLLAB IS UP
 
     } catch (err) {
         console.error("Error matching users:", err);
