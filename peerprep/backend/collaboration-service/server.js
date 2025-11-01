@@ -62,7 +62,7 @@ io.on("connection", async (socket) => {
     }
 
     console.log(`User connected: ${userId} with socket ID: ${socket.id}`);
-    socket.userId = userId;
+    socket.userId = userId; // store userId in socket for later use
     // if a userId -> socketId mapping is already in the redis, it means user is reconnecting
     const userMapExists = await client.exists(`userMaps:${userId}`);
     if (userMapExists) {
@@ -74,12 +74,13 @@ io.on("connection", async (socket) => {
             console.log(`User ${userId} rejoining room ${roomId}`);
             // add userId back to room's user set
             await client.sAdd(`room:${roomId}:users`, userId)
-            // cancel any 2 min TTL on empty room so it doesnt get deleted if a user rejoins
+            // cancel any 2 min redis TTL on empty room so it doesnt get deleted if a user rejoins
             await client.persist(`room:${roomId}:users`) 
             await client.persist(`room:${roomId}:info`) 
             socket.join(roomId);
             // notify partner that user has rejoined
             socket.to(roomId).emit("partnerRejoined", { userId });
+            // emit rejoinRoom to user itself
             socket.emit("rejoinRoom", { roomId: roomId, userId: userId });
         }
     } else {
@@ -94,6 +95,7 @@ io.on("connection", async (socket) => {
       await client.hSet(`room:${roomId}:info`, 'status', 'solved'); 
       socket.intentionalDisconnect = true;
       socket.disconnect();
+      io.to(roomId).emit("partnerFinished", { roomId });
     });
 
     socket.on("disconnect", async ( reason ) => {
@@ -132,7 +134,7 @@ io.on("connection", async (socket) => {
 
         // if the room is now empty, set redis TTL to delete room given time (extra buffer to give time to store into mongo after user leaves permanently)
         const userCount = await client.sCard(`room:${roomId}:users`);
-        if (userCount === 0) {
+        if (userCount === 0) {w
           await client.expire(`room:${roomId}:users`, timerDuration + 30)
           await client.expire(`room:${roomId}:info`, timerDuration + 30)
           console.log(`Deleted room ${roomId} as no one rejoined`);
@@ -177,13 +179,12 @@ io.on("connection", async (socket) => {
     socket.on("joinRoom", async ({ roomId, userId, username }) => {
       const infoKey = `room:${roomId}:info`
       const usersKey = `room:${roomId}:users`
-      const ts = Date.now().toString()
 
       try {
         // Run the Lua script atomically
         const res = await client.eval(joinScript, {
           keys: [infoKey, usersKey],
-          arguments: [userId, username, ts],
+          arguments: [userId, username],
         })
 
         // Handle "ROOM_NOT_FOUND"

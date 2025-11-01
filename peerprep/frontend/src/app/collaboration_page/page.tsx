@@ -13,22 +13,25 @@ export default function CollabPage() {
 
   // read query params from URL (works in any browser-based React app)
   useEffect(() => {
-    initSocket();
-    const params = new URLSearchParams(window.location.search);
+    initSocket(); // keep this initSocket in the useEffect to only happen once on mount. it is very important.
+    const params = new URLSearchParams(window.location.search); //IDK WHAT THIS DOES
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
   }, []);
 
   const handleDisconnect = () => {
-    if (!roomId) return (window.location.href = "/");
+    //PLEASE CHANGE THIS TO USE THE NEXT.JS ROUTER INSTEAD
+    if (!roomId) return (window.location.href = "/");  
+
 
     try {
       socket?.disconnect();
     } catch (e) {
       console.warn("socket disconnect error", e);
     }
-    // navigate away (change location as you like)
+    // navigate away (change location as you like) 
+    //PLEASE CHANGE THIS TO USE THE NEXT.JS ROUTER INSTEAD
     window.location.href = "/dashboard";
   };
 
@@ -39,6 +42,7 @@ export default function CollabPage() {
     }
 
     // simple client-side feedback — change as needed
+    //PLEASE CHANGE THIS TO USE THE NEXT.JS ROUTER INSTEAD
     window.location.href = "/dashboard";
   };
 
