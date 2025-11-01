@@ -28,6 +28,7 @@
   --color-lg-button: var(--light-green);
   --color-blue-button: var(--button-blue);
   --color-red-button: var(--hard-translucent);
+  --color-dblue-button: var(--dark-blue);
 
   /*hover states*/
   --color-blue-button-hover: var(--button-blue-hover);
@@ -84,6 +85,7 @@
   --darker-green: #0B6D59;
   --light-green: #158C66;
   --button-blue: #2F0B6D;
+  --dark-blue: #09072B;
 
   /*outline colors*/
   --green-outline: #0da385;

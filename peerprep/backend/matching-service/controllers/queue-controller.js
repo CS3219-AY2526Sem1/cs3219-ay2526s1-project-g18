@@ -197,7 +197,7 @@ export async function matchUsers(queueCriteria) {
         await leaveQueues(idKey1);
         await leaveQueues(idKey2);
 
-        await notifyCollabService(questionTopic, difficulty, id1, id2, idKey1, idKey2);
+        await notifyCollabService(questionTopic, difficulty, id1, id2, idKey1, idKey2); 
 
     } catch (err) {
         console.error("Error matching users:", err);
