@@ -4,6 +4,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getSocket } from "@/app/socket/socket";
 import { useNavigationGuard } from "next-navigation-guard";
 import { X, ArrowUpLeft } from "lucide-react";
 
@@ -15,10 +16,10 @@ const CLOSE_EVENT = "close";
 const JOIN_GENERAL_QUEUE_EVENT = "general";
 const JOIN_NO_DIFFICULTY_QUEUE_EVENT = "nodifficulty";
 
-
 const default_topic = "Arrays";
 const default_difficulty = "Easy";
 const MATCHING_API_BASE = "http://localhost:3002";
+const socket = getSocket();
 
 const difficultyInInt = (difficulty: any): string => {
   if (!difficulty) return "0";
@@ -38,7 +39,7 @@ export default function MatchingNotificationsPage() {
   const difficulty = searchParams?.get("difficulty") ?? default_difficulty;
 
   // Refs to track navigation/queue state
-  const isDifficultyButtonClicked = useRef(false);
+  const isDisconnectButtonClicked = useRef(false);
   const hasJoinedQueue = useRef(false);
 
   // States for notifications
@@ -127,23 +128,24 @@ export default function MatchingNotificationsPage() {
   // Disconnect button — ensure we await server cleanup before navigation
   const onDisconnectButton = async () => {
     try {
-      isDifficultyButtonClicked.current = true;
-      await leaveMatchQueue(userId);
-    } catch (err) {
-      console.error("Error while leaving queue on disconnect:", err);
-    } finally {
+      isDisconnectButtonClicked.current = true;
+      await leaveMatchQueue(userId).then(() => { socket?.disconnect(); });
       // close local SSE if open
       try { eventSourceRef.current?.close(); } catch {}
       eventSourceRef.current = null;
       router.push("/dashboard");
-    }
+    } catch (err) {
+      console.error("Error while leaving queue on disconnect:", err);
+    } 
   };
 
+  // this is called when the matching service has already popped the user from the queue after no match was found
   const exitPageNoDisconnect = () => {
     // close local SSE if open
-    isDifficultyButtonClicked.current = true;
+    isDisconnectButtonClicked.current = true; // override the navigation guard
     try { eventSourceRef.current?.close(); } catch {}
     eventSourceRef.current = null;
+    socket?.disconnect();
     router.push("/dashboard");
   };
 
@@ -154,8 +156,8 @@ export default function MatchingNotificationsPage() {
     confirm: async () => {
       const ok = window.confirm("Confirm leave page? You may take longer to get a match");
       if (!ok) return false;
-      if (!isDifficultyButtonClicked.current) {
-        await leaveMatchQueue(userId);
+      if (!isDisconnectButtonClicked.current) {
+        await leaveMatchQueue(userId).then(() => { socket?.disconnect(); });
       }
       return true;
     },
@@ -182,11 +184,14 @@ export default function MatchingNotificationsPage() {
       console.log("SSE connection established (client)");
       // join queue after SSE is open so the server can immediately notify us
       if (!hasJoinedQueue.current) {
-        try {
-          await joinMatchQueue(userId, topic, difficulty);
-        } catch (err) {
-          console.error("Failed to join queue after SSE open:", err);
-        }
+        await joinMatchQueue(userId, topic, difficulty)
+        .then(() => {
+            console.log('Successfully joined match queue');
+            socket?.connect();
+        })
+        .catch((error) => {
+            console.error("Failed to join queue after SSE open:", error);
+        });
       }
     };
 
@@ -278,6 +283,15 @@ export default function MatchingNotificationsPage() {
       hasJoinedQueue.current = false;
     };
   }, [userId, topic, difficulty]); // re-open if topic/difficulty changes
+
+    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string }) => {
+        //delay for 5 seconds and then push to /collaboration_page
+        console.log("Session starting in room:", data.roomId);
+        setTimeout(() => {
+            router.push(`/collaboration_page?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}`);
+        }, 5000);
+    });
+
 
   // ---------- UI (unchanged) ----------
   return (

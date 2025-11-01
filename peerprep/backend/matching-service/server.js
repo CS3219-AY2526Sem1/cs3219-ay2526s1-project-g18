@@ -4,7 +4,7 @@ import { connectRedis } from "./cloud-services/redis.js";
 
 const port = process.env.PORT || 3002;
 
-const server = http.createServer(index);
+export const server = http.createServer(index);
 
 await connectRedis();
 
