@@ -26,10 +26,6 @@ export function initSocket() {
 
     socket.on("connect", () => {
         console.log("Connected to socket", socket?.id);
-        //delay for 5 sec then console.log connected
-        setTimeout(() => {
-            console.log("Socket connection established for reals:", socket?.id);
-        }, 5000);
     });
 
     socket.on("roomCreated", (data: { roomId: string }) => {
@@ -55,6 +51,10 @@ export function initSocket() {
 
     socket.on("partnerLeft", (data: { userId: string }) => {
         console.log("Your partner has left the room:", data.userId);
+    });
+
+    socket.on("partnerFinished", (data: { roomId: string }) => {
+        console.log("Your partner has finished the session and left the room:", data.roomId);
     });
 
     socket.on("disconnect", () => {
