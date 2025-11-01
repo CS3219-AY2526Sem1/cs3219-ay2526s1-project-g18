@@ -5,7 +5,7 @@ import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useNavigationGuard } from "next-navigation-guard";
-import { X } from "lucide-react";
+import { X, ArrowUpLeft } from "lucide-react";
 
 // Event types from matching service (must match server-side values)
 const MATCH_EVENT = "match";
@@ -420,18 +420,16 @@ export default function MatchingNotificationsPage() {
         <div className="bg-dark-blue-bg h-screen w-screen flex flex-col justify-center items-center pt-7 pl-12 pr-12">
           <div className="bg-darkest-box w-5xl rounded-3xl flex flex-col justify-center items-center p-6 gap-4">
             <div className="flex flex-row">
-              <span className="font-inter text-logo-purple text-6xl font-bold ">Error: BuddyNotFound</span>
+              <span className="font-inter text-logo-purple text-6xl font-bold pt-5 ">Error: BuddyNotFound</span>
             </div>
-            <p className="font-poppins text-text-main text-2xl font-medium m-3">
+            <p className="font-poppins text-text-main text-4xl text-center font-medium m-3">
              Sorry, we are unable to find you a match at the moment. Please try again later. :&#91;.</p>
-            <div role="status">
-              <span className="sr-only">Loading...</span>
-            </div>
-            <p className="font-poppins text-2xl text-text-dark-purple">Finding random code buddy...</p>
-            <button className="bg-red-button p-3 font-poppins text-2xl text-text-red-button rounded-lg mt-5 flex items-center gap-2
-                hover:bg-red-button-hover hover:text-white"
+
+            <p className="font-poppins text-2xl text-text-dark-purple"></p>
+            <button className="bg-black-box p-5 font-poppins text-4xl text-text-main rounded-lg mt-5 flex items-center gap-2
+                hover:bg-blue-button-hover hover:text-white"
                     onClick={() => { exitPageNoDisconnect(); }}>
-              <X className="w-8 h-8" />
+              <ArrowUpLeft className="w-8 h-8"/>
               <span>Exit to dashboard</span>
             </button>
           </div>
