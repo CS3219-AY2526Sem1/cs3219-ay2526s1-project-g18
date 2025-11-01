@@ -134,7 +134,7 @@ io.on("connection", async (socket) => {
 
         // if the room is now empty, set redis TTL to delete room given time (extra buffer to give time to store into mongo after user leaves permanently)
         const userCount = await client.sCard(`room:${roomId}:users`);
-        if (userCount === 0) {w
+        if (userCount === 0) {
           await client.expire(`room:${roomId}:users`, timerDuration + 30)
           await client.expire(`room:${roomId}:info`, timerDuration + 30)
           console.log(`Deleted room ${roomId} as no one rejoined`);
