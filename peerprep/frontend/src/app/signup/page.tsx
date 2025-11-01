@@ -2,7 +2,6 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { BiSolidRightArrow } from "react-icons/bi"
-import { initSocket } from "../socket/socket";
 
 export interface AccountDetailErrors {
     email?: string;
@@ -42,7 +41,6 @@ export default function SignUpPage() {
                 // store user info in session storage so it can be used in other components
                 sessionStorage.setItem("token", accessToken);
                 sessionStorage.setItem("user", JSON.stringify({ id, username, email, isAdmin, createdAt }));
-                initSocket();
                 router.push("/dashboard");            
             } else if (response.status === 400) {
                 setErrors(data.errors);

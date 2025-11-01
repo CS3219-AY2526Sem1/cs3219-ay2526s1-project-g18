@@ -271,14 +271,16 @@ async function notifyCollabService(topic, difficulty, id1, id2, idKey1, idKey2) 
             body: JSON.stringify(body),
         });
 
-        if (!response.ok) {
+        if (response.status !== 200) {
+            console.log("Collaboration service returned error status:", response.status);
             const txt = await response.text().catch(() => "");
             sendErrorNotification(idKey1, `Error creating collaboration room (${response.status})`);
             sendErrorNotification(idKey2, `Error creating collaboration room (${response.status})`);
             console.error("Collaboration service error:", response.status, txt);
         } else {
-            sendMatchNotification(idKey1, { partnerId: id2, topic: questionTopic, difficulty: difficulty });
-            sendMatchNotification(idKey2, { partnerId: id1, topic: questionTopic, difficulty: difficulty });
+            console.log("Collaboration service successfully created room");
+            sendMatchNotification(idKey1, { partnerId: id2, topic: topic, difficulty: difficulty });
+            sendMatchNotification(idKey2, { partnerId: id1, topic: topic, difficulty: difficulty });
             console.log("Matched users:", id1, id2);
         }
 

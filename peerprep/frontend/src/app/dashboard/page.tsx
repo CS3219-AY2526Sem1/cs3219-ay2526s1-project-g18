@@ -4,6 +4,8 @@ import MatchingWidget from "./widgets/matchingWidget"
 import QuestionHistoryWidget from "./widgets/questionHistWidget"
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { getSocket, initSocket } from "../socket/socket";
+import { get } from "http";
 
 
 
@@ -42,6 +44,9 @@ export default function DashboardPage() {
                 setUserId(parseInt(parsedUser.id));
             }
         }
+        initSocket();
+        const socket = getSocket();
+        socket?.disconnect()
     }, [])
   return (
     <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12">

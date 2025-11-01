@@ -9,6 +9,7 @@ export function initSocket() {
     if (typeof window === "undefined") return null; // guard for SSR
 
     if (socket) return socket;
+    console.log("Initializing new socket connection");
 
     const user = sessionStorage.getItem("user");
     const parsedUser = user ? JSON.parse(user) : null;
@@ -16,7 +17,7 @@ export function initSocket() {
 
     socket = io('http://localhost:3003', 
         { auth: { token }, 
-        autoConnect: false,
+        autoConnect: true,
         reconnection: true,
         //try to reconnect for up to 2 minutes
         reconnectionAttempts: 40,
@@ -25,6 +26,10 @@ export function initSocket() {
 
     socket.on("connect", () => {
         console.log("Connected to socket", socket?.id);
+        //delay for 5 sec then console.log connected
+        setTimeout(() => {
+            console.log("Socket connection established for reals:", socket?.id);
+        }, 5000);
     });
 
     socket.on("roomCreated", (data: { roomId: string }) => {

@@ -130,6 +130,10 @@ export default function MatchingNotificationsPage() {
     try {
       isDisconnectButtonClicked.current = true;
       await leaveMatchQueue(userId).then(() => { socket?.disconnect(); });
+      // close local SSE if open
+      try { eventSourceRef.current?.close(); } catch {}
+      eventSourceRef.current = null;
+      router.push("/dashboard");
     } catch (err) {
       console.error("Error while leaving queue on disconnect:", err);
     } 
@@ -279,6 +283,15 @@ export default function MatchingNotificationsPage() {
       hasJoinedQueue.current = false;
     };
   }, [userId, topic, difficulty]); // re-open if topic/difficulty changes
+
+    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string }) => {
+        //delay for 5 seconds and then push to /collaboration_page
+        console.log("Session starting in room:", data.roomId);
+        setTimeout(() => {
+            router.push(`/collaboration_page?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}`);
+        }, 5000);
+    });
+
 
   // ---------- UI (unchanged) ----------
   return (

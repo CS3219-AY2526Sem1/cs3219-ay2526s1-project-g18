@@ -10,6 +10,7 @@ export async function createRoom(req, res) {
     while (!success) {
         roomId = `${topic}-${difficulty}-${v4()}`;
         const key = `room:${roomId}:info`;
+        // create hash set with key as `room:${roomId}:info` only if it does not already exist
         success = await client.hSetNX(key, 'created', Date.now().toString());
     }
 
@@ -33,7 +34,8 @@ export async function createRoom(req, res) {
         console.log(`Emitted roomCreated to socket ${socketId2} for user ${userId2}`);
     }
 
-    return res.status(200); 
+
+    return [res.status(200).json({ message: "Success" })]
 
   } catch (error) {
         console.error(`[500] /create-room -> ${error?.message || "Unknown error when creating room!"}`);

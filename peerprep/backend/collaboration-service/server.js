@@ -71,6 +71,15 @@ io.on("connection", async (socket) => {
       // check if they were in a room before disconnection. if so, emit rejoinRoom event
         const roomId = await client.hGet(`userMaps:${userId}`, "roomId");
         if (roomId) {
+            console.log(`User ${userId} rejoining room ${roomId}`);
+            // add userId back to room's user set
+            await client.sAdd(`room:${roomId}:users`, userId)
+            // cancel any 2 min TTL on empty room so it doesnt get deleted if a user rejoins
+            await client.persist(`room:${roomId}:users`) 
+            await client.persist(`room:${roomId}:info`) 
+            socket.join(roomId);
+            // notify partner that user has rejoined
+            socket.to(roomId).emit("partnerRejoined", { userId });
             socket.emit("rejoinRoom", { roomId: roomId, userId: userId });
         }
     } else {
@@ -83,6 +92,7 @@ io.on("connection", async (socket) => {
 
     socket.on("finishSession", async ({ roomId }) => {
       await client.hSet(`room:${roomId}:info`, 'status', 'solved'); 
+      socket.intentionalDisconnect = true;
       socket.disconnect();
     });
 
@@ -90,13 +100,14 @@ io.on("connection", async (socket) => {
       // if the user was in a room, notify partner of disconnect and set 2 min timers
       const userId = socket.userId;
       const roomId = await client.hGet(`userMaps:${userId}`, "roomId");
+
       let timerDuration;
       if (roomId) {
-        if ( reason === "transport close" || reason === "ping timeout" ) { // if accidental disconnect
+        if ( socket.intentionalDisconnect || reason === "client namespace disconnect" || reason === "server namespace disconnect" ) { // if purposeful disconnect
+          timerDuration = 0;
+        } else {
           timerDuration = 2 * 60 * 1000;
           socket.to(roomId).emit("partnerDisconnected", { userId });
-        } else {
-          timerDuration = 0;
         }
         // remove userId from room's user set
         await client.sRem(`room:${roomId}:users`, userId);
@@ -159,8 +170,6 @@ io.on("connection", async (socket) => {
           table.insert(usernames, ARGV[2])
 
         -- 5. Write back to hash
-        local userIds = cjson.encode(usersMembers)
-        local usernames = cjson.encode(usernamesMembers)
         redis.call('HSET', KEYS[1], 'usernames', cjson.encode(usernames))
 
         return
@@ -194,23 +203,19 @@ io.on("connection", async (socket) => {
         await client.hSet(`userMaps:${userId}`, { roomId: roomId })
         io.to(roomId).emit("userJoined", { userId, username })
 
+        const usersCount = await client.sCard(usersKey);
+        const usernames = await client.hGet(infoKey, 'usernames');
+        const username1 = JSON.parse(usernames)[0];
+        const username2 = JSON.parse(usernames)[1];
+        if (usersCount === 2) {
+          io.to(roomId).emit("sessionStart", { roomId, username1, username2 });
+        } 
+        
       } catch (err) {
         console.error("joinRoom eval error:", err)
         socket.emit("error", { message: "Server error joining room" })
       }
     });
-
-    socket.on("rejoinRoom", async ({ roomId, userId }) => {
-      // add userId back to room's user set
-      await client.sAdd(`room:${roomId}:users`, userId)
-      // cancel any 2 min TTL on empty room so it doesnt get deleted if a user rejoins
-      await client.persist(`room:${roomId}:users`) 
-      await client.persist(`room:${roomId}:info`) 
-      socket.join(roomId);
-      // notify partner that user has rejoined
-      socket.to(roomId).emit("partnerRejoined", { userId });
-    });
-
   });
 
 export default server;
