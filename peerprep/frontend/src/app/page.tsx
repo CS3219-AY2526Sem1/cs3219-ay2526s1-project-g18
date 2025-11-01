@@ -90,6 +90,6 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </div> 
   )
 }
