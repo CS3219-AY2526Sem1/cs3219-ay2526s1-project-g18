@@ -14,7 +14,14 @@ export function initSocket() {
     const parsedUser = user ? JSON.parse(user) : null;
     const token = sessionStorage.getItem("token");
 
-    socket = io('http://localhost:3003', { auth: { token }, autoConnect: false });
+    socket = io('http://localhost:3003', 
+        { auth: { token }, 
+        autoConnect: false,
+        reconnection: true,
+        //try to reconnect for up to 2 minutes
+        reconnectionAttempts: 40,
+        reconnectionDelay: 3000
+     });
 
     socket.on("connect", () => {
         console.log("Connected to socket", socket?.id);
@@ -29,9 +36,24 @@ export function initSocket() {
         console.log("Someone joined the room: ", data.username);
     });
 
-    socket.on("retryJoin", (data: { roomId: string }) => {
-        console.log("Retrying join...");
-        socket?.emit("joinRoom", { roomId: data.roomId, serId: parsedUser?.id, username: parsedUser?.username });
+    socket.on("rejoinRoom", () => {
+        console.log("Rejoining the room after reconnection");
+    });
+
+    socket.on("partnerRejoined", (data: {userId: string }) => {
+        console.log("your partner has rejoined the room", data.userId);
+    });
+
+    socket.on("partnerDisconnected", (data: { userId: string }) => {
+        console.log("Your partner has disconnected:", data.userId);
+    });
+
+    socket.on("partnerLeft", (data: { userId: string }) => {
+        console.log("Your partner has left the room:", data.userId);
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Disconnected from socket:", socket?.id);
     });
 
     return socket;

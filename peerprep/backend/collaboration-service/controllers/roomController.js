@@ -4,19 +4,24 @@ import { v4 } from 'uuid';
 export async function createRoom(req, res) {
   try {
     const { topic, difficulty, userId1, userId2 } = req.body;
-    const roomId = `${topic}-${difficulty}-${v4()}`
+    let roomId;
+    let success = false;
+
+    while (!success) {
+        roomId = `${topic}-${difficulty}-${v4()}`;
+        const key = `room:${roomId}:info`;
+        success = await client.hSetNX(key, 'created', Date.now().toString());
+    }
 
     await client.hSet(`room:${roomId}:info`, {
-        created: Date.now(),
-        updated: Date.now(),
-        inUse: 'false',
-        users: JSON.stringify([])
+        usernames: JSON.stringify([])
     })
+
     console.log(`Created room ${roomId} for topic ${topic} at difficulty ${difficulty}`);
 
-    const socketId1 = await client.get(`userSocket:${userId1}`);
+    const socketId1 = await client.hGet(`userMaps:${userId1}`, 'socketId');
     console.log(`Fetched socket ID for user ${userId1}: ${socketId1}`);
-    const socketId2 = await client.get(`userSocket:${userId2}`);
+    const socketId2 = await client.hGet(`userMaps:${userId2}`, 'socketId');
     console.log(`Fetched socket ID for user ${userId2}: ${socketId2}`);
     
     if (socketId1) {
@@ -34,28 +39,4 @@ export async function createRoom(req, res) {
         console.error(`[500] /create-room -> ${error?.message || "Unknown error when creating room!"}`);
         return res.status(500).json({ message: error.message || "Unknown error when creating room!" });
   }
-}
-
-// This is called if a user is allocated to a duplicate room that has already been filled. 
-// An alternative room is deterministically created so the remaining unallocated users are redirected to the same room.
-export async function createAltRoom(req, res) {
-    try {
-        const { roomId, userId }  = req.body;
-        const altRoomId = roomId + 1;
-
-        await client.hSet(`room:${altRoomId}:info`, {
-            created: Date.now(),
-            updated: Date.now(),
-            inUse: 'false',
-            users: JSON.stringify([])
-        })
-
-        const socketId = await client.get(`userSocket:${userId}`);
-        if (socketId) {
-            io.to(socketId).emit("roomCreated", { roomId: roomId });
-        }
-    } catch (error) {
-        console.error(`[500] /create-alt-room -> ${error?.message || "Unknown error when creating alternative room!"}`);
-        return res.status(500).json({ message: error.message || "Unknown error when creating alternative room!" });
-    }
 }
