@@ -57,6 +57,18 @@ export function initSocket() {
         console.log("Your partner has finished the session and left the room:", data.roomId);
     });
 
+    socket.on('5MinLeft', () => {
+        console.log("5 minutes left in the session");
+    });
+
+    socket.on('1MinLeft', () => {
+        console.log("1 minute left in the session");
+    }); 
+
+    socket.on('timeUp', () => {
+        console.log("Time is up for the session");
+    });
+
     socket.on("disconnect", () => {
         console.log("Disconnected from socket:", socket?.id);
     });
