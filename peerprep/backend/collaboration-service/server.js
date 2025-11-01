@@ -65,6 +65,7 @@ io.on("connection", async (socket) => {
         await client.del(`userSocket:${userId}`);
     });
 
+    //atomic operations for joinRoom and lua script by chatgpt
     const joinScript = `
         -- KEYS[1] = infoKey (hash)
         -- KEYS[2] = usersKey (set)

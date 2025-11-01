@@ -31,7 +31,6 @@ export default function DashboardPage() {
             router.push("/");
             console.error("You must be logged in to access this page.");
         } else {
-            console.log("Socket initialized in dashboard page");
             const parsedUser = JSON.parse(user);
             setUser(parsedUser);
             setToken(token);
