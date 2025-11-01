@@ -137,7 +137,14 @@ io.on("connection", async (socket) => {
         if (userCount === 0) {
           await client.expire(`room:${roomId}:users`, timerDuration + 30)
           await client.expire(`room:${roomId}:info`, timerDuration + 30)
-          console.log(`Deleted room ${roomId} as no one rejoined`);
+          setTimeout(async () => {
+            const usersTTL = await client.ttl(`room:${roomId}:users`);
+            const infoTTL = await client.ttl(`room:${roomId}:info`);
+            if (usersTTL === -2 && infoTTL === -2) {
+              disconnectTimers.delete(roomId); // cleanup any existing timers on the room
+              console.log(`Deleted room ${roomId} as no one rejoined`);
+            }
+          }, (timerDuration + 30) * 1000);
         }
 
       } else {
@@ -210,6 +217,26 @@ io.on("connection", async (socket) => {
         const username2 = JSON.parse(usernames)[1];
         if (usersCount === 2) {
           io.to(roomId).emit("sessionStart", { roomId, username1, username2 });
+
+          // set up timers for 5 min left, 1 min left, time up
+          const timer1 = setTimeout(async () => {
+            io.to(roomId).emit("5MinLeft");
+            disconnectTimers.delete(roomId);
+            const timer2 = setTimeout(async () => {
+              io.to(roomId).emit("1MinLeft");
+              disconnectTimers.delete(roomId);
+              const timer3 = setTimeout(async () => {
+                io.to(roomId).emit("timeUp");
+                await client.hSet(`room:${roomId}:info`, 'status', 'time ended'); 
+                socket.intentionalDisconnect = true;
+                socket.disconnect();
+                disconnectTimers.delete(roomId);
+              }, 60 * 1000);
+              disconnectTimers.set(roomId, timer3);
+            }, 4 * 60 * 1000);
+            disconnectTimers.set(roomId, timer2);
+          }, 15 * 60 * 1000);
+          disconnectTimers.set(roomId, timer1);
         } 
         
       } catch (err) {
