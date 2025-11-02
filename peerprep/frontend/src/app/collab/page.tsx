@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const socket = getSocket();
 
   // Dummy data for mockup
@@ -59,7 +60,7 @@ export default function CollabPage() {
   };
 
   return (
-    <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 px-6">
+    <div className="bg-dark-blue-bg min-h-screen flex flex-col pt-7 px-6">
       <div className="flex items-start justify-between px-10">
         <div className="flex-col w-full">
           <div className="flex justify-between items-center mb-5">
@@ -73,7 +74,7 @@ export default function CollabPage() {
             >
               <span>Connected at 23:45</span>
             </button>
-            <button className="border border-red-button px-4 py-1.5 font-poppins text-xl text-text-red-button rounded-lg flex items-center gap-2">
+            <button className="border border-yellow-outline px-4 py-1.5 font-poppins text-xl text-yellow-outline rounded-lg flex items-center gap-2">
               <Clock className="w-6 h-6" />
               <span>5 min left</span>
             </button>
@@ -102,9 +103,9 @@ export default function CollabPage() {
         </div>
       </div>
 
-      <div className="flex mt-10 bg-darkest-box rounded-4xl py-6 px-8 gap-10 h-full">
+      <div className="flex mt-10 bg-dark-box relative rounded-4xl h-[calc(95vh-200px)]">
         {/* Question */}
-        <div className="w-1/5">
+        <div className="w-1/5 px-4 py-6">
           <p className="font-poppins text-text-main text-3xl font-bold">{question.title}</p>
            <div className="my-4 flex flex-row bg-dark-box px-4 w-fit py-3 rounded-4xl gap-4 items-center">
               <button
@@ -116,66 +117,54 @@ export default function CollabPage() {
                       : question.difficulty === "HARD"
                         ? "bg-red-button-hover"
                         : "bg-gray-300 text-black") +
-                  " px-4 py-2 rounded-xl font-poppins text-lg"
+                  " px-4 py-1.5 rounded-xl font-poppins"
                 }
               >
                 {question.difficulty ?? "Easy"}
               </button>
               <div className="bg-light-box w-1 h-10 rounded-4xl"></div>
-              <h1 className="font-poppins text-logo-purple font-bold text-lg">
+              <h1 className="font-poppins text-logo-purple font-bold">
                 {question.topics.join(" ")}</h1>
             </div>
           <p>{question.description}</p>
         </div>
         {/* Editor */}
-        <div className="bg-black w-3/5 -mt-6">
+        <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>
           <p className="text-white">Code Editor Placeholder</p>
         </div>
+        {!isAIAssistantOpen && <button className="hover:scale-120 cursor-pointer transition duration-300 absolute right-10 top-6" onClick={() => setIsAIAssistantOpen(true)}>
+            <Sparkles className="w-6 h-6 text-white" />
+        </button>}
         {/* AI assistant */}
-        <div className="w-1/5">
-          <p className="text-white">AI Assistant Placeholder</p>
+        <div className={`transition-all duration-300 flex flex-col ${isAIAssistantOpen ? 'w-1/5' : 'w-0 hidden'}`}>
+          <div className="pt-4 pb-4 px-4 bg-light-box rounded-tr-3xl flex items-center gap-2">
+            <button
+              onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
+              className="text-white cursor-pointer hover:text-gray-300 transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+            <p className={`text-white flex items-center gap-2 font-poppins text-xl font-bold transition-opacity duration-300`}>
+              AI Assistant
+              <Sparkles className="text-white w-4 h-4" />
+            </p>
+          </div>
+ 
+          <div className="text-white flex-1 px-4 py-4 flex flex-col justify-between overflow-hidden">
+            <div className="flex flex-col gap-4 flex-shrink-0">
+              <div className="bg-dark-box rounded-lg px-4 py-2 cursor-pointer hover:bg-opacity-80 transition-colors">Explain all current code.</div>
+              <div className="bg-dark-box rounded-lg px-4 py-2 cursor-pointer hover:bg-opacity-80 transition-colors">Explain my buddy's code</div>
+              <div className="bg-dark-box rounded-lg px-4 py-2 cursor-pointer hover:bg-opacity-80 transition-colors">Explain the question</div>
+            </div>
+            <div className="mt-4 flex-shrink-0">
+              <textarea
+                className="w-full bg-dark-box text-white px-4 py-2 rounded-lg resize-none h-24 border-none outline-none"
+                placeholder="Ask me anything"
+              ></textarea>
+            </div>
+          </div>
         </div>
-
       </div>
     </div>
-    // <main className="min-h-screen flex items-center justify-center bg-gray-50">
-    //   <div className="w-full max-w-lg p-8 rounded-2xl shadow-md bg-white">
-    //     <header className="mb-6">
-    //       <h1 className="text-2xl font-semibold">Collaboration Room</h1>
-    //       <p className="text-sm text-gray-500 mt-1">Room: {roomId ?? "—"}</p>
-    //     </header>
-
-    //     <section className="mb-6">
-    //       <h2 className="text-lg font-medium mb-3">Participants</h2>
-    //       <div className="flex gap-3">
-    //         <div className="flex-1 p-4 rounded-xl border border-gray-200">
-    //           <p className="text-xs text-gray-400">User 1</p>
-    //           <p className="mt-1 font-medium">{user1 ?? "(not provided)"}</p>
-    //         </div>
-
-    //         <div className="flex-1 p-4 rounded-xl border border-gray-200">
-    //           <p className="text-xs text-gray-400">User 2</p>
-    //           <p className="mt-1 font-medium">{user2 ?? "(not provided)"}</p>
-    //         </div>
-    //       </div>
-    //     </section>
-
-    //     <section className="flex items-center justify-between">
-    //       <button
-    //         onClick={handleDisconnect}
-    //         className="px-4 py-2 rounded-xl border border-red-400 text-red-600 hover:bg-red-50"
-    //       >
-    //         Disconnect
-    //       </button>
-
-    //       <button
-    //         onClick={handleFinish}
-    //         className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:brightness-95"
-    //       >
-    //         Finish
-    //       </button>
-    //     </section>
-    //   </div>
-    // </main>
   );
 }
