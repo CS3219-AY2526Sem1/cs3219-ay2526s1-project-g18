@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
+import AlertModal, { AlertType } from "./components/AlertModal";
 
 export default function CollabPage() {
   const router = useRouter();
@@ -11,6 +12,10 @@ export default function CollabPage() {
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
+    isOpen: true, 
+    type: "partner-left" 
+  });
   const socket = getSocket();
 
   // Dummy data for mockup
@@ -57,6 +62,15 @@ export default function CollabPage() {
 
     // simple client-side feedback — change as needed
     router.push("/dashboard");
+  };
+
+  // Demo function to show different alerts
+  const showAlert = (type: AlertType) => {
+    setAlertModal({ isOpen: true, type });
+  };
+
+  const closeAlert = () => {
+    setAlertModal({ isOpen: false, type: alertModal.type });
   };
 
   return (
@@ -165,6 +179,15 @@ export default function CollabPage() {
           </div>
         </div>
       </div>
+      
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        type={alertModal.type}
+        onClose={closeAlert}
+        onAction={handleDisconnect}
+        onSecondaryAction={closeAlert}
+      />
     </div>
   );
 }
