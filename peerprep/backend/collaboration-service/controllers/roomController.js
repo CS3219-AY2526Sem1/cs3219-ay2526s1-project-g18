@@ -1,4 +1,4 @@
-import { client, io } from '../server.js';
+import { client, io , persistenceManager} from '../server.js';
 import { v4 } from 'uuid';
 
 export async function createRoom(req, res) {
@@ -14,11 +14,17 @@ export async function createRoom(req, res) {
         success = await client.hSetNX(key, 'created', Date.now().toString());
     }
 
+    // initialise room info entry in redis
     await client.hSet(`room:${roomId}:info`, {
-        usernames: JSON.stringify([])
+        usernames: JSON.stringify([]),
     })
-
+    
     console.log(`Created room ${roomId} for topic ${topic} at difficulty ${difficulty}`);
+
+    // add persistence entry
+    await persistenceManager.getOrCreateDoc(roomId);
+
+    console.log(`Initialized persistence for room ${roomId}`);
 
     const socketId1 = await client.hGet(`userMaps:${userId1}`, 'socketId');
     console.log(`Fetched socket ID for user ${userId1}: ${socketId1}`);

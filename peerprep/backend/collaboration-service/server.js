@@ -4,11 +4,16 @@ import redis from "redis";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
+import * as Y from 'yjs';
+import * as awarenessProtocol from 'y-protocols/awareness.js';
+import PersistenceManager from './persistence/persistenceManager.js';
+
 dotenv.config();
 
 const server = http.createServer(index);
 const port = process.env.PORT || 3003;
 const disconnectTimers = new Map();
+
 
 // Determine Redis URI based on environment
 let redisUri =
@@ -28,6 +33,11 @@ async function connectRedis() {
 }
 
 await connectRedis();
+
+// create persistence manager with 1 second repersist to redis interval
+export const persistenceManager = new PersistenceManager(client, { persistIntervalMs: 1000 });
+// preload existing rooms from redis (if any)
+persistenceManager.restoreAllRooms()
 
 server.listen(port);
 console.log("Collaboration service server listening on http://localhost:" + port);
@@ -60,7 +70,8 @@ io.on("connection", async (socket) => {
       clearTimeout(disconnectTimers.get(userId));
       disconnectTimers.delete(userId);
     }
-
+    
+    // ROOM CONNECTION LOGIC
     console.log(`User connected: ${userId} with socket ID: ${socket.id}`);
     socket.userId = userId; // store userId in socket for later use
     // if a userId -> socketId mapping is already in the redis, it means user is reconnecting
@@ -68,9 +79,11 @@ io.on("connection", async (socket) => {
     if (userMapExists) {
       // update the mapping with new socket id
         await client.hSet(`userMaps:${userId}`, { socketId: socket.id });
+
+      // ROOM RECONNECTION LOGIC
       // check if they were in a room before disconnection. if so, emit rejoinRoom event
         const roomId = await client.hGet(`userMaps:${userId}`, "roomId");
-        if (roomId) {
+        if (roomId) {// successful reconnection to previous room
             console.log(`User ${userId} rejoining room ${roomId}`);
             // add userId back to room's user set
             await client.sAdd(`room:${roomId}:users`, userId)
@@ -78,6 +91,14 @@ io.on("connection", async (socket) => {
             await client.persist(`room:${roomId}:users`) 
             await client.persist(`room:${roomId}:info`) 
             socket.join(roomId);
+
+            // Restore Yjs document and awareness state for the room
+            const { doc, awareness } = await persistenceManager.getOrCreateDoc(roomId);
+            const encodedDoc = Y.encodeStateAsUpdate(doc);
+            const encodedAwareness = awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awareness.getStates().keys()));
+            socket.emit('yJsSync', encodedDoc);
+            socket.emit('awarenessSync', encodedAwareness);
+
             // notify partner that user has rejoined
             socket.to(roomId).emit("partnerRejoined", { userId });
             // emit rejoinRoom to user itself
@@ -91,8 +112,10 @@ io.on("connection", async (socket) => {
       console.log(`Stored socket ID for user ${userId} in Redis.`);
     }
 
+
     socket.on("finishSession", async ({ roomId }) => {
-      await client.hSet(`room:${roomId}:info`, 'status', 'solved'); 
+      await client.hSet(`room:${roomId}:info`, 'status', 'solved');
+      persistenceManager.closeRoom(roomId); 
       socket.intentionalDisconnect = true;
       socket.disconnect();
       io.to(roomId).emit("partnerFinished", { roomId });
@@ -121,8 +144,8 @@ io.on("connection", async (socket) => {
             await client.del(`userMaps:${userId}`);
             console.log(`Deleted userMaps:${userId}`);
             // if the room doesnt have a status yet, set it to disconnected. otherwise it means session was finished properly
-            await client.hSetNX(`room:${roomId}:info`, 'status', 'disconnected');
-            // STORE ROOM INFO TO MONGO BASED ON USERID -> ensures premature disconnection and incomplete code is only reflected for this user
+            // STORE ROOM INFO TO ATTEMPT HISTORY ON USERID -> ensures premature disconnection and incomplete code is only reflected for this user  
+            persistenceManager.handleClientLeftRoom(roomId, userId);
             socket.to(roomId).emit("partnerLeft", { userId });
           } catch (err) {
             console.error(err);
@@ -135,16 +158,21 @@ io.on("connection", async (socket) => {
         // if the room is now empty, set redis TTL to delete room given time (extra buffer to give time to store into mongo after user leaves permanently)
         const userCount = await client.sCard(`room:${roomId}:users`);
         if (userCount === 0) {
-          await client.expire(`room:${roomId}:users`, timerDuration + 30)
-          await client.expire(`room:${roomId}:info`, timerDuration + 30)
+
+          // First clear our persistent storage
+          await persistenceManager.closeRoom(roomId);
+          await client.expire(`room:${roomId}:users`, timerDuration)
+          await client.expire(`room:${roomId}:info`, timerDuration)
+          await client.expire(`room:${roomId}:data`, timerDuration)
           setTimeout(async () => {
             const usersTTL = await client.ttl(`room:${roomId}:users`);
             const infoTTL = await client.ttl(`room:${roomId}:info`);
-            if (usersTTL === -2 && infoTTL === -2) {
+            const dataTTL = await client.ttl(`room:${roomId}:data`);
+            if (usersTTL === -2 && infoTTL === -2 && dataTTL === -2) { // means the room has been deleted
               disconnectTimers.delete(roomId); // cleanup any existing timers on the room
               console.log(`Deleted room ${roomId} as no one rejoined`);
             }
-          }, (timerDuration + 30) * 1000);
+          }, (timerDuration + 30) * 1000); 
         }
 
       } else {
@@ -152,6 +180,7 @@ io.on("connection", async (socket) => {
       }
     });
 
+    // ROOM JOINING LOGIC
     //atomic operations for joinRoom and lua script by chatgpt
     const joinScript = `
         -- KEYS[1] = infoKey (hash)
@@ -208,8 +237,25 @@ io.on("connection", async (socket) => {
 
         // Join socket and broadcast
         socket.join(roomId)
+        socket.roomId = roomId; // store roomId in socket for later use
+
         await client.hSet(`userMaps:${userId}`, { roomId: roomId })
         io.to(roomId).emit("userJoined", { userId, username })
+
+        // Retrieve or create Yjs document and awareness state
+        const entry = await persistenceManager.getOrCreateDoc(roomId);
+        const doc = entry.doc;
+        const awareness = entry.awareness;
+
+        // This will basically encode the DIFF between an empty Yjs doc and the current state
+        const encodedDoc = Y.encodeStateAsUpdate(doc);
+        // same for awareness
+        const encodedAwareness = awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awareness.getStates().keys()));
+
+        // CLIENT: listen to these ON CONNECT to set up doc and awareness on frontend when socket first connects
+        // client will need to apply these using Y.applyUpdate and awareness.applyUpdate respectively
+        socket.emit('yJsSync', encodedDoc);
+        socket.emit('awarenessSync', encodedAwareness);
 
         const usersCount = await client.sCard(usersKey);
         const usernames = await client.hGet(infoKey, 'usernames');
@@ -227,7 +273,7 @@ io.on("connection", async (socket) => {
               disconnectTimers.delete(roomId);
               const timer3 = setTimeout(async () => {
                 io.to(roomId).emit("timeUp");
-                await client.hSet(`room:${roomId}:info`, 'status', 'time ended'); 
+                await client.hSet(`room:${roomId}:info`, 'status', 'time_ended'); 
                 socket.intentionalDisconnect = true;
                 socket.disconnect();
                 disconnectTimers.delete(roomId);
@@ -244,6 +290,35 @@ io.on("connection", async (socket) => {
         socket.emit("error", { message: "Server error joining room" })
       }
     });
+
+    // Update backend Yjs doc and awareness CRDT on client updates
+    socket.on("yjsUpdate", async (update) => {
+         try {
+              const roomId = socket.roomId;
+              if (!roomId) return;
+              const entry = await persistenceManager.getOrCreateDoc(roomId);
+              // asked chatgpt how to make sure update is passed as correct type for Y.applyUpdate
+              const updateInUint8 = (update instanceof Uint8Array) ? update : new Uint8Array(Buffer.from(update));
+              Y.applyUpdate(entry.doc, updateInUint8);
+              // broadcast to peers
+              socket.to(roomId).emit('yjsUpdate', update);
+              persistenceManager.persistNow(roomId).catch(console.error);
+            } catch (err) {
+              console.error('Error handling yjsUpdate:', err);
+           } 
+      });
+    socket.on('awarenessUpdate', async (update) => {
+      try {
+        const roomId = socket.roomId;
+        if (!roomId) return;
+        await persistenceManager.applyAwarenessUpdate(roomId, update);
+        // broadcast to peers
+        socket.to(roomId).emit('awarenessUpdate', update);
+      } catch (err) {
+        console.error('Error handling awareness-update:', err);
+      }
+    });
+
   });
 
 export default server;
