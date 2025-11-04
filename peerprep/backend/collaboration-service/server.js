@@ -46,6 +46,9 @@ export const io = new Server(server, {
     cors: { origin: "*" }
 });
 
+// Lightweight room text store for simple collaborative editing fallback
+const roomText = new Map(); // roomId -> { content: string, version: number }
+
 io.on("connection", async (socket) => {
     console.log("New client attempt to connect to Collaboration Service");
     // Authenticate user using JWT
@@ -188,9 +191,9 @@ io.on("connection", async (socket) => {
         -- ARGV[1] = userId
         -- ARGV[2] = username
 
-        -- 1. Check if room exists
+        -- 1. Ensure room exists (auto-create minimal info)
         if redis.call('EXISTS', KEYS[1]) == 0 then
-          return {err="ROOM_NOT_FOUND"}
+          redis.call('HSET', KEYS[1], 'usernames', '[]')
         end
 
         -- 2) Check current count to enforce max 2 users
@@ -199,13 +202,22 @@ io.on("connection", async (socket) => {
           return {err="ROOM_FULL"}
         end
 
-        -- 3. Add userId and usernames to the sets
+        -- 3. Add userId to users set
         redis.call('SADD', KEYS[2], ARGV[1])
 
-        -- 4. Update usernames list
-          local usernamesJson = redis.call('HGET', KEYS[1], 'usernames') or "[]"
-          local usernames = cjson.decode(usernamesJson)
+        -- 4. Update usernames list (ensure uniqueness)
+        local usernamesJson = redis.call('HGET', KEYS[1], 'usernames') or '[]'
+        local usernames = cjson.decode(usernamesJson)
+        local exists = false
+        for i=1,#usernames do
+          if usernames[i] == ARGV[2] then
+            exists = true
+            break
+          end
+        end
+        if not exists then
           table.insert(usernames, ARGV[2])
+        end
 
         -- 5. Write back to hash
         redis.call('HSET', KEYS[1], 'usernames', cjson.encode(usernames))
@@ -222,12 +234,6 @@ io.on("connection", async (socket) => {
           keys: [infoKey, usersKey],
           arguments: [userId, username],
         })
-
-        // Handle "ROOM_NOT_FOUND"
-        if (res && res.err === "ROOM_NOT_FOUND") {
-          console.warn(`joinRoom: no room info found for ${infoKey}`)
-          return socket.emit("error", { message: "Room not found" })
-        }
 
         // Handle "ROOM_FULL"
         if (res && res.err === "ROOM_FULL") {
@@ -319,7 +325,62 @@ io.on("connection", async (socket) => {
       }
     });
 
+    socket.on('requestSync', async ({ roomId }) => {
+      try {
+        if (!roomId) return;
+        const { doc, awareness } = await persistenceManager.getOrCreateDoc(roomId);
+        const encodedDoc = Y.encodeStateAsUpdate(doc);
+        const encodedAwareness = awarenessProtocol.encodeAwarenessUpdate(
+          awareness,
+          Array.from(awareness.getStates().keys())
+        );
+        socket.emit('yJsSync', encodedDoc);
+        socket.emit('awarenessSync', encodedAwareness);
+      } catch (err) {
+        console.error('Error handling requestSync:', err);
+      }
+    });
+
+    socket.on("chatMessage", ({ roomId, text, sender, time, senderId }) => {
+      socket.to(roomId).emit("chatMessage", { text, sender, time, senderId: senderId || socket.id });
+    });
+
+    socket.on('editorTextChanged', ({ roomId, content, version }) => {
+      roomText.set(roomId, { content: String(content || ''), version: Number(version || Date.now()) });
+      socket.to(roomId).emit('editorTextChanged', { content, version, senderId: socket.id });
+    });
+
+    socket.on('requestEditorSync', ({ roomId }) => {
+      const entry = roomText.get(roomId);
+      if (entry) {
+        socket.emit('editorTextChanged', { content: entry.content, version: entry.version, senderId: 'server' });
+      }
+    });
+
+    socket.on('cursorUpdate', ({ roomId, userId, username, selection, color }) => {
+      socket.to(roomId).emit('cursorUpdate', {
+        userId: userId || socket.id,
+        username,
+        selection,
+        senderId: socket.id,
+      });
+    });
+
+    socket.on('forceJoinRoom', ({ roomId, username }) => {
+      try {
+        socket.join(roomId);
+        socket.roomId = roomId;
+        io.to(roomId).emit('userJoined', { userId: socket.id, username: username || 'guest' });
+        const entry = roomText.get(roomId);
+        if (entry) {
+          socket.emit('editorTextChanged', { content: entry.content, version: entry.version, senderId: 'server' });
+        }
+      } catch (e) {
+        console.error('forceJoinRoom error', e);
+        socket.emit('error', { message: 'forceJoinRoom failed' });
+      }
+    });
+    
   });
 
 export default server;
-
