@@ -148,10 +148,12 @@ io.on("connection", async (socket) => {
             await client.hSetNX(`room:${roomId}:info`, 'status', 'disconnected');
              
             // STORE ROOM INFO TO ATTEMPT HISTORY W USERID -> ensures premature disconnection and incomplete code is only reflected for this user 
-            try {
-              await persistenceManager.handleClientLeftRoom(roomId, userId);
-            } catch (e) {
-              console.error('handleClientLeftRoom error during immediate closeRoom flow', e);
+            
+            await persistenceManager.handleClientLeftRoom(roomId, userId);
+            // now if the status is solved, we should delete it so that the other user can continue without being affected
+            const roomStatus = await client.hGet(`room:${roomId}:info`, 'status');
+            if (roomStatus === 'solved') {
+              await client.hDel(`room:${roomId}:info`, 'status');
             }
             socket.to(roomId).emit("partnerLeft", { userId });
           } catch (err) {
