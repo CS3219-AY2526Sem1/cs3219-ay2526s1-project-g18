@@ -139,30 +139,52 @@ export default class PersistenceManager {
 
   /** Update own and Attempt History Service when one client leaves the room */
   async handleClientLeftRoom(roomId, clientIdToLeave) {
-    const entry = this.docs.get(roomId);
-    if (!entry) return;
-    const { awareness } = entry;
-    try {
-      awarenessProtocol.removeAwarenessStates(
-      awareness,
-      Array.from(awareness.getStates().keys())
-        .filter(client => client !== clientIdToLeave),
-      'connection closed')
-    } catch (err) {
-      console.error('Error removing awareness state for client leaving room', err);
-    }
-    
-    await this._postAttemptToQuestionHistoryService(roomId, clientIdToLeave);
-    
-    // persist immediately
-    this.persistNow(roomId).catch(e => console.error('persistNow failed after clientLeftRoom', e));
+    let entry = this.docs.get(roomId);
 
+    if (!entry) {
+      console.warn('No entry found for room:', roomId, '- attempting restore from Redis');
+      try {
+        // restore the doc into memory (this will create an entry even if empty)
+        entry = await this.getOrCreateDoc(roomId);
+        if (!entry) {
+          console.warn('Restore attempt did not create an entry for room:', roomId);
+          // proceed anyway — _getRoomPersistentInfo can still read from Redis
+        } else {
+          console.log('Successfully restored entry for room:', roomId);
+        }
+      } catch (err) {
+        console.error('Error restoring room inside handleClientLeftRoom', err);
+      }
+    }
+
+    // If we have an in-memory entry now, remove JUST the leaving client id from awareness
+    if (entry && entry.awareness) {
+      try {
+        awarenessProtocol.removeAwarenessStates(entry.awareness, [clientIdToLeave], 'connection closed');
+      } catch (err) {
+        console.error('Error removing awareness state for client leaving room', err);
+      }
+    } else {
+      // no in-memory awareness — ok, we'll still attempt to notify based on persisted data
+      console.log('handleClientLeftRoom: no in-memory awareness for', roomId, '; continuing with persisted info');
+    }
+
+    // persist (if we have entry this will save; otherwise _persistOnce is a no-op)
+    await this.persistNow(roomId).catch(e => console.error('persistNow failed after clientLeftRoom', e));
+
+    // attempt to notify Attempt History Service (your _postAttempt... should be idempotent)
+    try {
+      await this._postAttemptToQuestionHistoryService(roomId, clientIdToLeave);
+    } catch (e) {
+      console.error('Error notifying Attempt History Service on client leaving room', e);
+    }
   }
+
 
   /** Helper function to get all fields from persistent storage to save to Attempt History Service
    * Returns a payload for the Attempt History Service
   */
-  async _getRoomPersistentInfo(roomId) {
+  async _getRoomPersistentInfo(roomId, userId) {
     // The in-memory map stores entries of the form { doc, awareness, interval, ... }
     const entry = this.docs.get(roomId);
 
@@ -221,19 +243,18 @@ export default class PersistenceManager {
         userNames = usernames;
       }
     }
-
     return {
+      userId,
       sharedCode,
       completedStatus,
       connectedAtTime,
       qnData,
       userNames,
     };
-
   }
 
   /** Close room: persist once, stop interval and remove awareness listener */
-async closeRoom(roomId, userId) {
+async closeRoom(roomId) {
   const entry = this.docs.get(roomId);
   if (!entry) return;
 
@@ -257,22 +278,11 @@ async closeRoom(roomId, userId) {
   } catch (e) {
     console.log('closeRoom - removeAwarenessStates error:', e.message);
   }
-
-  // check if someone disconnected
-  const discIdfetched = await this.client.hGet(`room:${roomId}:info`, 'disconnected');
-  if (discIdfetched && discIdfetched === userId) {
-    return; // user already disconnected, added to attempt history so skip
-  }
-
-  // notify Attempt History Service
-  await this._postAttemptToQuestionHistoryService(roomId, userId);
-
   // finally remove entry from memory
   this.docs.delete(roomId);
 }
 
   async _postAttemptToQuestionHistoryService(roomId, userId) {
-    
     // read user progress state
     const userProgressState = await this.client.hGet(`room:${roomId}:info`, 'status');
 
@@ -285,6 +295,7 @@ async closeRoom(roomId, userId) {
     }
 
     const canNotify = payload &&
+      payload.userId &&
       (payload.sharedCode !== undefined && payload.sharedCode !== null) &&
       payload.completedStatus &&
       payload.connectedAtTime &&
@@ -294,7 +305,7 @@ async closeRoom(roomId, userId) {
     if (userProgressState === 'solved') {
       console.log('User finished the room successfully');
       if (canNotify) {
-        console.log(`Notifying Attempt History Service that room is ${payload.completedStatus} at ${payload.connectedAtTime}`);
+        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
         // TODO: call Attempt History Service here (await fetch/HTTP client)
       } else {
         console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
@@ -302,7 +313,7 @@ async closeRoom(roomId, userId) {
     } else {
       console.log('User did not finish the room in time');
       if (canNotify) {
-        console.log(`Notifying Attempt History Service that room is ${payload.completedStatus} at ${payload.connectedAtTime}`);
+        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
         // TODO: call Attempt History Service here
       } else {
         console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
@@ -312,7 +323,6 @@ async closeRoom(roomId, userId) {
 
 
 /**
-
  * Restore all persisted rooms into memory.
  * Call this once at server startup to eagerly restore rooms that were
  * persisted before a crash / restart.

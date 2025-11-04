@@ -90,6 +90,7 @@ io.on("connection", async (socket) => {
             // cancel any 2 min redis TTL on empty room so it doesnt get deleted if a user rejoins
             await client.persist(`room:${roomId}:users`) 
             await client.persist(`room:${roomId}:info`) 
+            await client.persist(`room:${roomId}:data`)
             socket.join(roomId);
 
             // Restore Yjs document and awareness state for the room
@@ -115,7 +116,6 @@ io.on("connection", async (socket) => {
 
     socket.on("finishSession", async ({ roomId }) => {
       await client.hSet(`room:${roomId}:info`, 'status', 'solved');
-      persistenceManager.closeRoom(roomId); 
       socket.intentionalDisconnect = true;
       socket.disconnect();
       io.to(roomId).emit("partnerFinished", { roomId });
@@ -144,8 +144,15 @@ io.on("connection", async (socket) => {
             await client.del(`userMaps:${userId}`);
             console.log(`Deleted userMaps:${userId}`);
             // if the room doesnt have a status yet, set it to disconnected. otherwise it means session was finished properly
-            // STORE ROOM INFO TO ATTEMPT HISTORY ON USERID -> ensures premature disconnection and incomplete code is only reflected for this user  
-            persistenceManager.handleClientLeftRoom(roomId, userId);
+            // in order to avoid overwriting 'solved' or 'time_ended' status we must use the hSetNX command
+            await client.hSetNX(`room:${roomId}:info`, 'status', 'disconnected');
+             
+            // STORE ROOM INFO TO ATTEMPT HISTORY W USERID -> ensures premature disconnection and incomplete code is only reflected for this user 
+            try {
+              await persistenceManager.handleClientLeftRoom(roomId, userId);
+            } catch (e) {
+              console.error('handleClientLeftRoom error during immediate closeRoom flow', e);
+            }
             socket.to(roomId).emit("partnerLeft", { userId });
           } catch (err) {
             console.error(err);
@@ -160,10 +167,11 @@ io.on("connection", async (socket) => {
         if (userCount === 0) {
 
           // First clear our persistent storage
-          await persistenceManager.closeRoom(roomId);
-          await client.expire(`room:${roomId}:users`, timerDuration)
-          await client.expire(`room:${roomId}:info`, timerDuration)
-          await client.expire(`room:${roomId}:data`, timerDuration)
+          
+          console.log(`Room ${roomId} is now empty. Setting TTL for room data.`);
+          await client.expire(`room:${roomId}:users`, timerDuration + 30)
+          await client.expire(`room:${roomId}:info`, timerDuration + 30)
+          await client.expire(`room:${roomId}:data`, timerDuration + 30)
           setTimeout(async () => {
             const usersTTL = await client.ttl(`room:${roomId}:users`);
             const infoTTL = await client.ttl(`room:${roomId}:info`);
@@ -172,7 +180,7 @@ io.on("connection", async (socket) => {
               disconnectTimers.delete(roomId); // cleanup any existing timers on the room
               console.log(`Deleted room ${roomId} as no one rejoined`);
             }
-          }, (timerDuration + 30) * 1000); 
+          }, (timerDuration + 30) * 1000); // INCREASED BUFFER TIME TO 50s
         }
 
       } else {
