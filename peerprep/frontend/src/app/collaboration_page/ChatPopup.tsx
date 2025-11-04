@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
+import { Send } from "lucide-react";
 
 type Message = {
   sender: "me" | "buddy";
@@ -27,7 +28,6 @@ export default function ChatPopup({
   const [messages, setMessages] = useState<Message[]>([]);
   const [current, setCurrent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [dbgCounts, setDbgCounts] = useState<{ sent: number; recv: number }>({ sent: 0, recv: 0 });
 
   // SCROLL TO BOTTOM
   useEffect(() => {
@@ -40,13 +40,12 @@ export default function ChatPopup({
   useEffect(() => {
     if (!socket) return;
     const handleIncoming = (data: { text: string; sender: string; time: string; senderId?: string }) => {
-      console.log('[dbg] chatMessage incoming', data);
+      // Avoid showing my sent message twice (since I append it on send)
       if (data.senderId && socket && data.senderId === socket.id) return;
       setMessages((prev) => [
         ...prev,
         { sender: "buddy", text: data.text, time: data.time },
       ]);
-      setDbgCounts((c) => ({ ...c, recv: c.recv + 1 }));
     };
     socket.on("chatMessage", handleIncoming);
     return () => {
@@ -59,27 +58,46 @@ export default function ChatPopup({
   return (
     <div
       className="fixed bottom-28 right-10 z-50"
-      style={{ width: "370px", boxShadow: "0px 7px 32px 2px #2823554d" }}
+      style={{
+        width: "370px",
+        background: "#e8ddfb",
+        borderRadius: "1.25rem", // rounded-2xl
+        overflow: "hidden",
+        boxShadow: "0px 7px 32px 2px #2823554d",
+      }}
     >
-      <div className="rounded-2xl bg-[#6838ad]">
-        <div className="flex items-center justify-between px-5 py-3 rounded-t-2xl bg-[#6838ad]">
+      <div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4" style={{ background: "#6838ad" }}>
           <div className="flex items-center gap-2">
-            <div className="text-2xl">💬</div>
+            <span className="text-2xl">💬</span>
             <div>
-              <div className="font-bold text-white text-lg">Code buddy chat</div>
+              <div className="font-bold text-white text-xl">Code buddy chat</div>
               <div className="text-xs text-[#eedaff]">{`with ${buddyHandle}`}</div>
             </div>
           </div>
           <button onClick={onClose}
-            className="text-[#eedaff] text-2xl px-1 hover:text-white"
+            className="text-[#eedaff] text-3xl px-2 hover:text-white"
             aria-label="Close chat"
+            style={{ lineHeight: "1" }}
           >✕</button>
         </div>
-        <div className="bg-[#dbcefa] px-5 py-4 min-h-[220px] max-h-[260px] overflow-y-auto rounded-b-lg">
+        {/* Messages area */}
+        <div
+          className="px-5 py-6"
+          style={{
+            minHeight: "180px",
+            maxHeight: "250px",
+            background: "#e8ddfb",
+            overflowY: "auto"
+          }}
+        >
           <div>
             {messages.map((msg, idx) => (
-              <div key={idx} className={`mb-2 ${msg.sender === "me" ? "text-right" : "text-left"}`}>
-                <div className={`inline-block px-3 py-2 rounded-lg ${msg.sender === "me" ? "bg-[#9266de] text-white" : "bg-[#f4f1ff] text-[#6838ad]"}`}>
+              <div key={idx} className={`mb-4 ${msg.sender === "me" ? "text-right" : "text-left"}`}>
+                <div className={`inline-block px-4 py-2 rounded-xl ${msg.sender === "me"
+                  ? "bg-white text-[#6838ad]"
+                  : "bg-[#f3eeff] text-[#6838ad]"}`}>
                   {msg.text}
                 </div>
                 <div className="text-xs text-[#8680a3] mt-1">
@@ -90,13 +108,14 @@ export default function ChatPopup({
             <div ref={messagesEndRef}></div>
           </div>
         </div>
+        {/* Input row */}
         <form
-          className="flex p-4 bg-[#dbcefa] rounded-b-2xl"
+          className="flex items-center gap-2 p-5"
+          style={{ background: "#e8ddfb" }}
           onSubmit={e => {
             e.preventDefault();
             if (current.trim() === "" || !socket || !roomId) return;
             const time = new Date().toTimeString().slice(0, 5);
-            console.log('[dbg] chatMessage emit', { roomId, text: current, sender: userName, time, senderId: socket.id });
             socket.emit("chatMessage", {
               roomId,
               text: current,
@@ -108,19 +127,23 @@ export default function ChatPopup({
               ...prev,
               { sender: "me", text: current, time },
             ]);
-            setDbgCounts((c) => ({ ...c, sent: c.sent + 1 }));
             setCurrent("");
           }}
         >
           <input
-            className="flex-1 px-4 py-2 rounded-xl outline-none bg-white border-0 text-[#6838ad] placeholder-[#b7aadb] text-sm"
+            className="flex-1 px-4 py-3 rounded-xl outline-none bg-white border-0 text-[#855ec9] placeholder-[#b7aadb] text-base"
             placeholder="Type a message"
             value={current}
             onChange={e => setCurrent(e.target.value)}
             autoFocus
+            style={{ border: "none" }}
           />
-          <button className="ml-2 bg-[#9266de] text-white p-2 rounded-full hover:bg-[#6235b1]" type="submit" aria-label="Send">
-            <svg width="24" height="24" fill="none" className="inline" aria-hidden="true"><path d="M3 20v-6l9-4 9 4v6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M16.2 8L12 3.5 7.8 8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <button
+            className="bg-[#a892d1] text-white p-4 rounded-full hover:bg-[#836fb2] flex items-center justify-center"
+            type="submit"
+            aria-label="Send"
+          >
+            <Send size={28} strokeWidth={2.4} />
           </button>
         </form>
       </div>

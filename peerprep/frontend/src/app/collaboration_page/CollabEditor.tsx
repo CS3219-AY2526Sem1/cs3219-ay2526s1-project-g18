@@ -9,7 +9,9 @@ type CollabEditorProps = {
   userName?: string;
 };
 
-export default function CollabEditor({ socket, roomId, userName = "Anonymous" }: CollabEditorProps) {
+export default function CollabEditor({
+  socket, roomId, userName = "Anonymous"
+}: CollabEditorProps) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const applyingRemoteRef = useRef(false);
@@ -18,50 +20,64 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
   const remoteDecorationsRef = useRef<Map<string, string[]>>(new Map());
   const remoteWidgetsRef = useRef<Map<string, { widget: monaco.editor.IContentWidget; dom: HTMLElement }>>(new Map());
 
-  // debug state
   const [sentCount, setSentCount] = useState(0);
   const [recvCount, setRecvCount] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
 
-  const log = (_msg: string, _data?: any) => {};
-
-  // Monaco setup
+  // Monaco setup and THEME
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (typeof (window as any).MonacoEnvironment === "undefined") {
       (window as any).MonacoEnvironment = { getWorkerUrl: () => "/monaco/editor.worker.js" };
     }
     if (containerRef.current && !editorRef.current) {
+      monaco.editor.defineTheme("peerprep-dark", {
+        base: "vs-dark",
+        inherit: true,
+        rules: [
+          { token: "", foreground: "958AD5" },
+          { token: "string", foreground: "8ec1e7" },
+          { token: "keyword", foreground: "7316D7" },
+          { token: "number", foreground: "5ae2c6" },
+          { token: "comment", foreground: "D0CAED" },
+        ],
+        colors: {
+          "editor.background": "#00000042",           // --black-box
+          "editor.foreground": "#958AD5",             // --text-main
+          "editor.lineHighlightBackground": "#2119566E", // --dark-box
+          "editorCursor.foreground": "#6E5AE2",       // --logo-purple
+          "editor.selectionBackground": "#6e5ae24a",  // --color-light-box
+          "editorWidget.background": "#21195644",     // --darkest-box
+          "editorLineNumber.foreground": "#958ad57a", // --text-dark-purple
+        }
+      });
       const model = monaco.editor.createModel("", "plaintext");
       editorRef.current = monaco.editor.create(containerRef.current, {
         model,
         automaticLayout: true,
         minimap: { enabled: false },
+        theme: "peerprep-dark",
+        fontFamily: "var(--font-geist-mono), var(--font-mono), 'Menlo', monospace",
+        fontSize: 16,
+        lineNumbers: "on"
       });
-      // editor ready
     }
     return () => {
       editorRef.current?.dispose();
       editorRef.current = null;
-      // editor disposed
     };
   }, []);
 
   // Socket-based collaboration (no Yjs)
   useEffect(() => {
     const editor = editorRef.current;
-    if (!socket || !roomId || !editor) {
-      log("Missing socket/room/editor - collab off");
-      return;
-    }
+    if (!socket || !roomId || !editor) return;
 
-    // Ensure join fallback in case page-level join didn't happen
     const doJoinFallback = () => {
       try { socket.emit('forceJoinRoom', { roomId, username: userName }); } catch {}
     };
     if (socket.connected) doJoinFallback(); else socket.once('connect', doJoinFallback);
 
-    // Request initial content for the room
     try { socket.emit('requestEditorSync', { roomId }); } catch {}
     socket.on('connect', () => {
       try { socket.emit('requestEditorSync', { roomId }); } catch {}
@@ -77,7 +93,6 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       debounceTimerRef.current = setTimeout(() => {
         socket.emit('editorTextChanged', { roomId, content, version: Date.now() });
         setSentCount(n => n + 1);
-        log('Sent editorTextChanged', { len: content.length });
       }, 120);
     });
 
@@ -91,17 +106,16 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       model.pushEditOperations([], [{ range: model.getFullModelRange(), text: data.content }], () => null);
       applyingRemoteRef.current = false;
       setRecvCount(n => n + 1);
-      log('Applied editorTextChanged', { len: data.content.length });
     };
-
     socket.on('editorTextChanged', onEditorTextChanged);
 
-    // Cursor sharing
+    // Color the cursor: alternate between logo-purple and logo-green for users
     const hashToColor = (id: string) => {
+      // If you want true alternation, use user index. For now, hash id.
       let h = 0;
       for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-      const hue = h % 360;
-      return `hsl(${hue} 90% 50%)`;
+      // Even: purple, Odd: green
+      return h % 2 === 0 ? "var(--color-logo-purple)" : "var(--color-logo-green)";
     };
     const ensureUserStyle = (userId: string, color: string) => {
       const styleId = `cursor-style-${userId}`;
@@ -130,7 +144,7 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       const model = editorRef.current.getModel();
       if (!model) return;
       const userId = data.userId || data.senderId || 'peer';
-      if (userId === socket.id) return; // don't render self
+      if (userId === socket.id) return;
       const color = data.color || hashToColor(userId);
       ensureUserStyle(userId, color);
       const prev = remoteDecorationsRef.current.get(userId) || [];
@@ -171,16 +185,14 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       } else {
         entry.dom.textContent = data.username || 'peer';
         entry.dom.style.background = color;
-        // reposition
         const w = entry.widget;
-        const _oldGetPos = w.getPosition;
         (w as any).getPosition = () => ({ position: pos, preference: [monaco.editor.ContentWidgetPositionPreference.ABOVE] });
         editorRef.current.layoutContentWidget(w);
       }
     };
     socket.on('cursorUpdate', onCursorUpdate);
 
-    // Disconnection handling
+    // Disconnection handling (unchanged)
     const onDisconnect = () => {
       setToast('You have been disconnected. Trying to reconnect...');
       editor.updateOptions({ readOnly: true });
@@ -196,10 +208,7 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       editor.updateOptions({ readOnly: false });
       setTimeout(() => setToast(null), 1500);
     };
-    const onConnect = () => {
-      // Treat a fresh connect after disconnect as a rejoin if timer active
-      if (disconnectTimerRef.current) onRejoin();
-    };
+    const onConnect = () => { if (disconnectTimerRef.current) onRejoin(); };
     socket.on('disconnect', onDisconnect);
     socket.on('rejoinRoom', onRejoin);
     socket.on('connect', onConnect);
@@ -212,13 +221,11 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
       socket.off('disconnect', onDisconnect);
       socket.off('rejoinRoom', onRejoin);
       socket.off('connect', onConnect);
-      // remove remote widgets
       if (editorRef.current) {
         remoteWidgetsRef.current.forEach(({ widget }) => editorRef.current?.removeContentWidget(widget));
       }
       remoteWidgetsRef.current.clear();
       if (debounceTimerRef.current) { clearTimeout(debounceTimerRef.current); debounceTimerRef.current = null; }
-      // cleanup done
     };
   }, [socket, roomId]);
 
@@ -226,8 +233,13 @@ export default function CollabEditor({ socket, roomId, userName = "Anonymous" }:
     <main className="flex flex-col items-center justify-center min-h-[700px] bg-gray-100">
       <div
         ref={containerRef}
-        className="w-full max-w-4xl h-[600px] border border-gray-300 rounded-lg shadow-md"
-        style={{ minHeight: "300px" }}
+        className="w-full max-w-4xl h-[350px] border rounded-2xl shadow-md"
+        style={{
+          minHeight: "350px",
+          background: "var(--black-box)",
+          border: "1.5px solid var(--dark-box)",
+          borderRadius: "1.25rem"
+        }}
       />
       {toast && (
         <div className="fixed bottom-4 left-4 z-50 mb-2 bg-yellow-600 text-white px-3 py-2 rounded">{toast}</div>
