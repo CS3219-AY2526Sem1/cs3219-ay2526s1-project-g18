@@ -15,11 +15,26 @@ export default function CollabPage() {
   const [socket, setSocket] = useState<any>(null);
   const [joinState, setJoinState] = useState<string>("idle");
   const [myName, setMyName] = useState<string | null>(null);
+  const [unread, setUnread] = useState(false);
 
   // New: Disconnect/reconnect state
   const [disconnected, setDisconnected] = useState(false);
   const [unableToReconnect, setUnableToReconnect] = useState(false);
   const disconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleMessage = () => {
+      if (!chatOpen) setUnread(true);
+    };
+    socket.on("chatMessage", handleMessage);
+    return () => socket.off("chatMessage", handleMessage);
+  }, [socket, chatOpen]);
+
+  const handleOpenChat = () => {
+    setChatOpen(true);
+    setUnread(false);
+  };
 
   useEffect(() => {
     const s = initSocket();
@@ -161,14 +176,28 @@ export default function CollabPage() {
       </main>
       {/* Floating chat button and popup */}
       <div className="fixed bottom-7 right-10 z-40">
-        <button
-          onClick={() => setChatOpen(true)}
-          className="flex items-center gap-2 bg-[#6838ad] text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
-          style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
-        >
-          <span className="text-2xl">💬</span>
-          Chat with buddy
-        </button>
+      <button
+        onClick={handleOpenChat}
+        className="flex items-center gap-2 bg-[#6838ad] text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
+        style={{ boxShadow: "0 7px 20px 2px #2823554d", position: "relative" }}
+      >
+        <span className="text-2xl">💬</span>
+        Chat with buddy
+        {unread && (
+          <span
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: 20,
+              height: 20,
+              background: "#24d282",
+              borderRadius: "50%",
+              border: "2px solid white"
+            }}
+          />
+        )}
+      </button>
       </div>
       <ChatPopup
         open={chatOpen}

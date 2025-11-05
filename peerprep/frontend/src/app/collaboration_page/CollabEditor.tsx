@@ -42,7 +42,7 @@ export default function CollabEditor({
           { token: "comment", foreground: "D0CAED" },
         ],
         colors: {
-          "editor.background": "#00000042",           // --black-box
+          "editor.background": "#13122b",           // --black-box
           "editor.foreground": "#958AD5",             // --text-main
           "editor.lineHighlightBackground": "#2119566E", // --dark-box
           "editorCursor.foreground": "#6E5AE2",       // --logo-purple
