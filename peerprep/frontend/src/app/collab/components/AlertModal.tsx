@@ -50,11 +50,8 @@ export default function AlertModal({
   isOpen, 
   type, 
   onClose, 
-  onAction, 
-  onSecondaryAction 
 }: AlertModalProps) {
   const config = alertConfigs[type];
-
 
   if (!isOpen) return null;
 

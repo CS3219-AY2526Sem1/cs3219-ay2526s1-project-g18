@@ -13,9 +13,12 @@ export default function CollabPage() {
   const [user2, setUser2] = useState<string | null>(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
-    isOpen: true, 
-    type: "partner-left" 
+    isOpen: false, 
+    type: "reconnected" 
   });
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [connectionStatus, setConnectionStatus] = useState<string>("Connected at 00:00");
+  const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
   const socket = getSocket();
 
   // Dummy data for mockup
@@ -40,7 +43,69 @@ export default function CollabPage() {
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
-  }, []);
+
+    // Socket event listeners
+    if (socket) {
+      // Connection events
+      socket.on('connect', () => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        setConnectionStatus(`Connected at ${timeString}`);
+      });
+
+      // Partner events
+      socket.on('partnerDisconnected', () => {
+        setAlertModal({ isOpen: true, type: "partner-disconnected" });
+      });
+
+      socket.on('partnerLeft', () => {
+        setAlertModal({ isOpen: true, type: "partner-left" });
+      });
+
+      // Time events
+      socket.on('5MinLeft', () => {
+        setTimeLeft('5 min left');
+      });
+
+      socket.on('1MinLeft', () => {
+        setTimeLeft('1 min left');
+      });
+
+      socket.on('timeUp', () => {
+        setTimeLeft('Time up!');
+        router.push('/dashboard');
+      });
+
+      // Reconnection events
+      socket.on('disconnect', () => {
+        setIsReconnecting(true);
+        setAlertModal({ isOpen: true, type: "disconnected" });
+      });
+
+      socket.on('rejoinRoom', () => {
+        setIsReconnecting(false);
+        setAlertModal({ isOpen: true, type: "reconnected" });
+      });
+
+      // Cleanup listeners on unmount
+      return () => {
+        socket.off('connect');
+        socket.off('partnerJoined');
+        socket.off('partnerDisconnected');
+        socket.off('partnerLeft');
+        socket.off('partnerFinished');
+        socket.off('5MinLeft');
+        socket.off('1MinLeft');
+        socket.off('timeUp');
+        socket.off('disconnect');
+        socket.off('rejoinRoom');
+      };
+    }
+  }, [socket, router]);
 
   const handleDisconnect = () => {
     if (!roomId) return (router.push("/"));
@@ -84,14 +149,24 @@ export default function CollabPage() {
             </div>
              <div className="flex gap-4">
             <button 
-              className="border border-dg-button px-4 py-1.5 font-poppins text-xl text-dg-button rounded-lg"
+              className={`border px-4 py-1.5 font-poppins text-xl rounded-lg ${
+                isReconnecting 
+                  ? 'border-yellow-outline text-yellow-outline' 
+                  : 'border-dg-button text-dg-button'
+              }`}
             >
-              <span>Connected at 23:45</span>
+              <span>{isReconnecting ? 'Reconnecting...' : connectionStatus}</span>
             </button>
-            <button className="border border-yellow-outline px-4 py-1.5 font-poppins text-xl text-yellow-outline rounded-lg flex items-center gap-2">
-              <Clock className="w-6 h-6" />
-              <span>5 min left</span>
-            </button>
+            {timeLeft && (
+              <button className={`border px-4 py-1.5 font-poppins text-xl rounded-lg flex items-center gap-2 ${
+                timeLeft.includes('1 min') ? 'border-red-outline text-red-outline' :
+                timeLeft.includes('5 min') ? 'border-yellow-outline text-yellow-outline' :
+                'border-yellow-outline text-yellow-outline'
+              }`}>
+                <Clock className="w-6 h-6" />
+                <span>{timeLeft}</span>
+              </button>
+            )}
           </div>
           </div>
           <div className="flex w-full justify-between items-center">
@@ -100,13 +175,13 @@ export default function CollabPage() {
           </p>
           <div className="flex gap-4">
             <button 
-              className="bg-dg-button p-3 font-poppins hover:bg-green-button-hover text-xl text-white rounded-lg flex items-center gap-2 hover:text-white"
+              className="cursor-pointer bg-dg-button p-3 font-poppins hover:bg-green-button-hover text-xl text-white rounded-lg flex items-center gap-2 hover:text-white"
               onClick={handleFinish}
             >
               <Check className="text-white h-6 w-6"/>
               <span>Finish</span>
             </button>
-            <button className="bg-red-button p-3 font-poppins text-xl text-text-red-button rounded-lg flex items-center gap-2
+            <button className="cursor-pointer bg-red-button p-3 font-poppins text-xl text-text-red-button rounded-lg flex items-center gap-2
                 hover:bg-red-button-hover hover:text-white"
                     onClick={handleDisconnect}>
               <X className="w-6 h-6" />
