@@ -1,11 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
 
+  // Dummy data for mockup
+  const questionDummy = 
+  {
+    "id": 1,
+    "title": "LRU Cache",
+    "createdAt": "2025-09-25T08:56:23.722Z",
+    "description": "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.",
+    "difficulty": "EASY",
+    "topics": [
+    "LINKED_LISTS",
+    "HASHING"
+    ],
+    "published": true
+  };
 
 const getOtherUsername = (userName1: string, userName2: string) => {
   // Try to read a plain `username` entry first (some flows may set this).
@@ -30,12 +44,14 @@ const getOtherUsername = (userName1: string, userName2: string) => {
   return myUsername === userName1 ? userName2 : userName1;
 }
 
+
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
   const [otherUsername, setOtherUsername] = useState<string | null>(null);
+  const [question, setQuestion] = useState<any>(questionDummy);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
     isOpen: false, 
@@ -46,20 +62,7 @@ export default function CollabPage() {
   const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
   const socket = getSocket();
 
-  // Dummy data for mockup
-  const question = 
-  {
-    "id": 1,
-    "title": "LRU Cache",
-    "createdAt": "2025-09-25T08:56:23.722Z",
-    "description": "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.",
-    "difficulty": "EASY",
-    "topics": [
-    "LINKED_LISTS",
-    "HASHING"
-    ],
-    "published": true
-  }
+
 
 
 
@@ -69,6 +72,22 @@ export default function CollabPage() {
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
+    const qnDataStrFetched = params.get("questionDataStr");
+    let qnData;
+    if (qnDataStrFetched) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(qnDataStrFetched));
+        // If backend passed an array (e.g. [ { ... } ] ), use the first element
+        qnData = Array.isArray(parsed) ? parsed[0] : parsed;
+      } catch (err) {
+        console.error("Failed to parse questionDataStr:", err, " — falling back to dummy");
+        qnData = questionDummy;
+      }
+    } else {
+      qnData = questionDummy;
+    }
+    console.log("Fetched question data:", qnData);
+    setQuestion(qnData);
     setConnectionStatus(`Connected at ${params.get("connectedAtTime") || "00:00"}`);
     const otherUser = getOtherUsername(params.get("username1") || "", params.get("username2") || "");
     setOtherUsername(otherUser);
@@ -228,27 +247,34 @@ export default function CollabPage() {
       <div className="flex mt-10 bg-dark-box relative rounded-4xl h-[calc(95vh-200px)]">
         {/* Question */}
         <div className="w-1/5 px-4 py-6">
-          <p className="font-poppins text-text-main text-3xl font-bold">{question.title}</p>
-           <div className="my-4 flex flex-row bg-dark-box px-4 w-fit py-3 rounded-4xl gap-4 items-center">
-              <button
-                className={
-                  (question.difficulty === "EASY"
-                    ? "bg-green-button-hover"
-                    : question.difficulty === "MEDIUM"
-                      ? "bg-yellow-button-hover"
-                      : question.difficulty === "HARD"
-                        ? "bg-red-button-hover"
-                        : "bg-gray-300 text-black") +
-                  " px-4 py-1.5 rounded-xl font-poppins"
-                }
-              >
-                {question.difficulty ?? "Easy"}
-              </button>
-              <div className="bg-light-box w-1 h-10 rounded-4xl"></div>
-              <h1 className="font-poppins text-logo-purple font-bold">
-                {question.topics.join(" ")}</h1>
-            </div>
-          <p>{question.description}</p>
+          <p className="font-poppins text-text-main text-3xl font-bold">
+            {question?.title ?? "Loading question..."}
+          </p>
+
+          <div className="my-4 flex flex-row bg-dark-box px-4 w-fit py-3 rounded-4xl gap-4 items-center">
+            <button
+              className={
+                (question?.difficulty === "EASY"
+                  ? "bg-green-button-hover"
+                  : question?.difficulty === "MEDIUM"
+                    ? "bg-yellow-button-hover"
+                    : question?.difficulty === "HARD"
+                      ? "bg-red-button-hover"
+                      : "bg-gray-300 text-black") +
+                " px-4 py-1.5 rounded-xl font-poppins"
+              }
+            >
+              {question?.difficulty ?? "Easy"}
+            </button>
+
+            <div className="bg-light-box w-1 h-10 rounded-4xl"></div>
+
+            <h1 className="font-poppins text-logo-purple font-bold">
+              {(question?.topics ?? []).join(" ")}
+            </h1>
+          </div>
+
+          <p>{question?.description ?? "Loading description..."}</p>
         </div>
         {/* Editor */}
         <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>

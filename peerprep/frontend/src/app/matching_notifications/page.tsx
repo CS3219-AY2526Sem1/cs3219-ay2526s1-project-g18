@@ -1,3 +1,14 @@
+//AI Assistance Disclosure:
+//Tool: ChatGPT (model: GPT-5 Thinking), date: 2025-10-30
+//Scope: Only used to handle notifications from matching service
+// Everything else in this page including the HTTP requests to join/leave queue, setting up the navguard, UI states and rendering logic were all hand-implemented by us.
+// Prompt summary: Using the following notifications (match, timeout, error, close, join queue with/without difficulty), create an SSE connection to the matching service to listen for these events. Ensure that the user joins the queue only after the SSE connection. Make sure the close the listeners appropriately. Store the matching state in React state and display different UI based on the state. Also, suggest which exit points to use to close the SSE connection properly
+// Attached the .\backend\matching-service\util\sse-event-names.js file for its reference
+
+//Author review: All the code in this page is written by us except the code blocks prefaced with
+// [AI USED]
+// The SSE notifications architecture implemented in Matching Service backend and subscribed to in this page were all conscious decisions made by us. AI was simply used to help add the listeners, add states to render different notification UI (all hand-implemented) and close them appropriately. We chose this architecture because it fits our requirements for realtime notifications. We ensured that all AI-generated code in this page were tested and reviewed by us to match our needs.
+
 // Main matching page (displayed when matching service is first invoked)
 // start matching service
 "use client"
@@ -8,7 +19,7 @@ import { getSocket } from "@/app/socket/socket";
 import { useNavigationGuard } from "next-navigation-guard";
 import { X, ArrowUpLeft } from "lucide-react";
 
-// Event types from matching service (must match server-side values)
+// [AI USED] Event types from matching service (must match server-side values)
 const MATCH_EVENT = "match";
 const TIMEOUT_EVENT = "timeout";
 const ERROR_EVENT = "error";
@@ -170,7 +181,7 @@ export default function MatchingNotificationsPage() {
     },
   });
 
-  // SSE setup: open connection first, then join queue on open (prevents race)
+  // [AI USED] SSE setup: open connection first, then join queue on open (prevents race)
   useEffect(() => {
     if (!userId) return;
 
@@ -291,13 +302,16 @@ export default function MatchingNotificationsPage() {
     };
   }, [userId, topic, difficulty]); // re-open if topic/difficulty changes
 
-    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string, connectedAtTime: string}) => {
+    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string, connectedAtTime: string, questionDataStr: string}) => {
         //delay for 5 seconds and then push to /collaboration_page
         console.log("Session starting in room:", data.roomId);
         const connectedTime = isoToLocalHHMM(data.connectedAtTime);
         console.log("Time connected:", data.connectedAtTime);
+          // ensure questionData exists and is a valid JSON string
+
+        const qParam = data.questionDataStr ? encodeURIComponent(data.questionDataStr) : '';
         setTimeout(() => {
-            router.push(`/collab?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}&connectedAtTime=${connectedTime ?? ""}`);
+            router.push(`/collab?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}&connectedAtTime=${connectedTime ?? ""}&questionDataStr=${qParam}`);
         }, 5000);
     });
 
