@@ -269,10 +269,12 @@ io.on("connection", async (socket) => {
 
         const usersCount = await client.sCard(usersKey);
         const usernames = await client.hGet(infoKey, 'usernames');
+        const connectedAtTime = await client.hGet(infoKey, 'created');
         const username1 = JSON.parse(usernames)[0];
         const username2 = JSON.parse(usernames)[1];
         if (usersCount === 2) {
-          io.to(roomId).emit("sessionStart", { roomId, username1, username2 });
+          io.to(roomId).emit("sessionStart", { roomId, username1, username2, connectedAtTime});
+          console.log(`Room ${roomId} has users ${username1} and ${username2}. Session started.`);
 
           // set up timers for 5 min left, 1 min left, time up
           const timer1 = setTimeout(async () => {

@@ -6,11 +6,36 @@ import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
 
+
+const getOtherUsername = (userName1: string, userName2: string) => {
+  // Try to read a plain `username` entry first (some flows may set this).
+  let myUsername = sessionStorage.getItem("username");
+
+  // Fallback: some pages store the user object under `user` as JSON.
+  if (!myUsername) {
+    const userStr = sessionStorage.getItem("user");
+    if (userStr) {
+      try {
+        const parsed = JSON.parse(userStr);
+        if (parsed && parsed.username) myUsername = String(parsed.username);
+      } catch (e) {
+        // ignore parse errors and leave myUsername null
+      }
+    }
+  }
+
+  // If we still don't have a username, default to returning the other arg
+  if (!myUsername) return userName2 || userName1;
+
+  return myUsername === userName1 ? userName2 : userName1;
+}
+
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
+  const [otherUsername, setOtherUsername] = useState<string | null>(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
     isOpen: false, 
@@ -37,25 +62,32 @@ export default function CollabPage() {
   }
 
 
+
   useEffect(() => {
     initSocket(); // initSocket to only happen once on mount
     const params = new URLSearchParams(window.location.search);
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
+    setConnectionStatus(`Connected at ${params.get("connectedAtTime") || "00:00"}`);
+    const otherUser = getOtherUsername(params.get("username1") || "", params.get("username2") || "");
+    setOtherUsername(otherUser);
+  
 
     // Socket event listeners
     if (socket) {
       // Connection events
-      socket.on('connect', () => {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', { 
-          hour12: false, 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-        setConnectionStatus(`Connected at ${timeString}`);
-      });
+      // socket.on('connect', () => {
+      //   const now = new Date();
+      //   const timeString = now.toLocaleTimeString('en-US', { 
+      //     hour12: false, 
+      //     hour: '2-digit', 
+      //     minute: '2-digit' 
+      //   });
+      //   setConnectionStatus(`Connected at ${timeString}`);
+      // });
+
+
 
       // Partner events
       socket.on('partnerDisconnected', () => {
@@ -83,7 +115,7 @@ export default function CollabPage() {
       // Reconnection events
       socket.on('disconnect', () => {
         setIsReconnecting(true);
-        setAlertModal({ isOpen: true, type: "disconnected" });
+          setAlertModal({ isOpen: true, type: "disconnected" });
       });
 
       socket.on('rejoinRoom', () => {
@@ -94,6 +126,7 @@ export default function CollabPage() {
       // Cleanup listeners on unmount
       return () => {
         socket.off('connect');
+        socket.off("sessionStart");
         socket.off('partnerJoined');
         socket.off('partnerDisconnected');
         socket.off('partnerLeft');
@@ -171,7 +204,7 @@ export default function CollabPage() {
           </div>
           <div className="flex w-full justify-between items-center">
           <p className="font-poppins text-text-main text-3xl font-bold">
-            Collaborative session with @{user2}
+            Collaborative session with @{otherUsername}
           </p>
           <div className="flex gap-4">
             <button 

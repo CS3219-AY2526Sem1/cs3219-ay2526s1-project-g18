@@ -11,7 +11,8 @@ export async function createRoom(req, res) {
         roomId = `${topic}-${difficulty}-${v4()}`;
         const key = `room:${roomId}:info`;
         // create hash set with key as `room:${roomId}:info` only if it does not already exist
-        success = await client.hSetNX(key, 'created', Date.now().toString());
+        const iso = new Date().toISOString();
+        success = await client.hSetNX(key, 'created', iso);
     }
 
     // initialise room info entry in redis

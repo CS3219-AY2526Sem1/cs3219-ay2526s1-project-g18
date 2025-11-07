@@ -31,6 +31,13 @@ const difficultyInInt = (difficulty: any): string => {
   }
 };
 
+function isoToLocalHHMM(isoString: string): string {
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return ''; // guard for invalid input
+  // 24-hour format
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
 export default function MatchingNotificationsPage() {
   const [userId, setUserId] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
@@ -284,11 +291,13 @@ export default function MatchingNotificationsPage() {
     };
   }, [userId, topic, difficulty]); // re-open if topic/difficulty changes
 
-    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string }) => {
+    socket?.on("sessionStart", (data: { roomId: string, username1: string, username2: string, connectedAtTime: string}) => {
         //delay for 5 seconds and then push to /collaboration_page
         console.log("Session starting in room:", data.roomId);
+        const connectedTime = isoToLocalHHMM(data.connectedAtTime);
+        console.log("Time connected:", data.connectedAtTime);
         setTimeout(() => {
-            router.push(`/collab?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}`);
+            router.push(`/collab?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}&connectedAtTime=${connectedTime ?? ""}`);
         }, 5000);
     });
 

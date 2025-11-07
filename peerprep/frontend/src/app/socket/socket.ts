@@ -28,6 +28,7 @@ export function initSocket() {
         console.log("Connected to socket", socket?.id);
     });
 
+
     socket.on("roomCreated", (data: { roomId: string }) => {
         console.log("Room created with ID:", data.roomId);
         socket?.emit("joinRoom", { roomId: data.roomId, userId: parsedUser?.id, username: parsedUser?.username });
