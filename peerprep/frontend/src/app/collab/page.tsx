@@ -3,7 +3,7 @@
 import React, { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
-import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
+import { Check, Clock, X, ChevronRight, Sparkles, MessageCircleMore } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
 import CollabEditor from "./components/CollabEditor";
 import ChatPopup from "./components/ChatPopup";
@@ -225,7 +225,7 @@ export default function CollabPage() {
       <div className="flex mt-10 bg-dark-box relative rounded-4xl h-[calc(95vh-200px)]">
         {/* Question */}
         <div className="w-1/5 px-4 py-6">
-          <p className="font-poppins text-text-main text-3xl font-bold">
+          <p className="font-poppins text-text-main text-3xl font-bold ml-4">
             {question?.title ?? "Loading question..."}
           </p>
 
@@ -252,7 +252,7 @@ export default function CollabPage() {
             </h1>
           </div>
 
-          <p>{question?.description ?? "Loading description..."}</p>
+          <p className="font-poppins text-lg ml-3">{question?.description ?? "Loading description..."}</p>
         </div>
         {/* Editor */}
         <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>
@@ -299,10 +299,10 @@ export default function CollabPage() {
       <div className="fixed bottom-7 right-10 z-40">
         <button
           onClick={() => setChatOpen(true)}
-          className="flex items-center gap-2 bg-[#6838ad] text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
+          className="flex items-center gap-2 bg-logo-purple text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
           style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
         >
-          <span className="text-2xl">💬</span>
+          <span className="text-2xl"><MessageCircleMore className="w-7 h-7"/></span>
           Chat with buddy
         </button>
       </div>
