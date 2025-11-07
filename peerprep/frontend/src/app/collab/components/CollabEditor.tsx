@@ -230,15 +230,13 @@ export default function CollabEditor({
   }, [socket, roomId]);
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-[700px] bg-gray-100">
+    <main className="flex flex-col items-center justify-center w-full h-full">
       <div
         ref={containerRef}
-        className="w-full max-w-4xl h-[350px] border rounded-2xl shadow-md"
+        className="w-full h-full border-0"
         style={{
           minHeight: "350px",
           background: "var(--black-box)",
-          border: "1.5px solid var(--dark-box)",
-          borderRadius: "1.25rem"
         }}
       />
       {toast && (

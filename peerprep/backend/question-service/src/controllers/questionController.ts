@@ -4,12 +4,36 @@ import type { Question } from '@prisma/client';
 
 const prisma = new PrismaClient()
 
-// Retrieves all questions
+// Retrieves all questions with optional topic and difficulty filtering
 export const getQuestions = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const questions: Question[] = await prisma.question.findMany({
-      where: { published: true },
-    });
+    const { topic, difficulty, limit } = req.query;
+    
+    // Build dynamic SQL query with proper NULL handling
+    let sqlQuery = `
+      SELECT * FROM "Question" 
+      WHERE published = true
+    `;
+    
+    // Add difficulty filter if provided
+    if (difficulty && typeof difficulty === 'string') {
+      const difficultyValue = difficulty.toUpperCase();
+      if (Object.values(QuestionDifficulty).includes(difficultyValue as QuestionDifficulty)) {
+        sqlQuery += ` AND difficulty = '${difficultyValue}'::"QuestionDifficulty"`;
+      }
+    }
+    
+    // Add topic filter if provided  
+    if (topic && typeof topic === 'string') {
+      const topicValue = topic.toUpperCase();
+      if (Object.values(QuestionTopic).includes(topicValue as QuestionTopic)) {
+        sqlQuery += ` AND topics @> ARRAY['${topicValue}']::"QuestionTopic"[]`;
+      }
+    }
+    
+    sqlQuery += ` ORDER BY RANDOM() LIMIT ${limit ? Number(limit) : 10}`;
+    
+    const questions = await prisma.$queryRawUnsafe(sqlQuery)
     
     res.json(questions);
   } catch (error) {
