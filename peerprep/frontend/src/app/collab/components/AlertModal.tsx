@@ -9,8 +9,6 @@ interface AlertModalProps {
   isOpen: boolean;
   type: AlertType;
   onClose: () => void;
-  onAction?: () => void;
-  onSecondaryAction?: () => void;
 }
 
 interface AlertConfig {

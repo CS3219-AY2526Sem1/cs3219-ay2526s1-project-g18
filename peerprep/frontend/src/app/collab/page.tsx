@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
+import CollabEditor from "./components/CollabEditor";
 
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
@@ -43,6 +45,10 @@ export default function CollabPage() {
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
+
+    const userStr = sessionStorage.getItem("user");
+    const parsed = userStr ? JSON.parse(userStr) : null;
+    setCurrentUser(parsed?.username ?? params.get("user"));
 
     // Socket event listeners
     if (socket) {
@@ -219,7 +225,11 @@ export default function CollabPage() {
         </div>
         {/* Editor */}
         <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>
-          <p className="text-white">Code Editor Placeholder</p>
+          <CollabEditor
+              socket={socket}
+              roomId={roomId}
+              userName={currentUser ?? user1 ?? "You"}
+          />
         </div>
         {!isAIAssistantOpen && <button className="hover:scale-120 cursor-pointer transition duration-300 absolute right-10 top-6" onClick={() => setIsAIAssistantOpen(true)}>
             <Sparkles className="w-6 h-6 text-white" />
@@ -260,8 +270,6 @@ export default function CollabPage() {
         isOpen={alertModal.isOpen}
         type={alertModal.type}
         onClose={closeAlert}
-        onAction={handleDisconnect}
-        onSecondaryAction={closeAlert}
       />
     </div>
   );
