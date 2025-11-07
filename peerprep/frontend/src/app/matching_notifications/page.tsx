@@ -288,7 +288,7 @@ export default function MatchingNotificationsPage() {
         //delay for 5 seconds and then push to /collaboration_page
         console.log("Session starting in room:", data.roomId);
         setTimeout(() => {
-            router.push(`/collaboration_page?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}`);
+            router.push(`/collab?roomId=${data.roomId}&username1=${data.username1 ?? ""}&username2=${data.username2 ?? ""}`);
         }, 5000);
     });
 
