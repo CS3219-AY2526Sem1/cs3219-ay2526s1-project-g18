@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
+import CollabEditor from "./components/CollabEditor";
 
   // Dummy data for mockup
   const questionDummy = 
@@ -21,36 +22,12 @@ import AlertModal, { AlertType } from "./components/AlertModal";
     "published": true
   };
 
-const getOtherUsername = (userName1: string, userName2: string) => {
-  // Try to read a plain `username` entry first (some flows may set this).
-  let myUsername = sessionStorage.getItem("username");
-
-  // Fallback: some pages store the user object under `user` as JSON.
-  if (!myUsername) {
-    const userStr = sessionStorage.getItem("user");
-    if (userStr) {
-      try {
-        const parsed = JSON.parse(userStr);
-        if (parsed && parsed.username) myUsername = String(parsed.username);
-      } catch (e) {
-        // ignore parse errors and leave myUsername null
-      }
-    }
-  }
-
-  // If we still don't have a username, default to returning the other arg
-  if (!myUsername) return userName2 || userName1;
-
-  return myUsername === userName1 ? userName2 : userName1;
-}
-
-
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
-  const [otherUsername, setOtherUsername] = useState<string | null>(null);
   const [question, setQuestion] = useState<any>(questionDummy);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
@@ -62,16 +39,16 @@ export default function CollabPage() {
   const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
   const socket = getSocket();
 
-
-
-
-
   useEffect(() => {
     initSocket(); // initSocket to only happen once on mount
     const params = new URLSearchParams(window.location.search);
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
+    const userStr = sessionStorage.getItem("user");
+    const parsed = userStr ? JSON.parse(userStr) : null;
+    setCurrentUser(parsed?.username ?? params.get("user"));
+
     const qnDataStrFetched = params.get("questionDataStr");
     let qnData;
     if (qnDataStrFetched) {
@@ -86,13 +63,12 @@ export default function CollabPage() {
     } else {
       qnData = questionDummy;
     }
+
     console.log("Fetched question data:", qnData);
     setQuestion(qnData);
-    setConnectionStatus(`Connected at ${params.get("connectedAtTime") || "00:00"}`);
-    const otherUser = getOtherUsername(params.get("username1") || "", params.get("username2") || "");
-    setOtherUsername(otherUser);
-  
 
+    setConnectionStatus(`Connected at ${params.get("connectedAtTime") || "00:00"}`);
+  
     // Socket event listeners
     if (socket) {
       // Connection events
@@ -223,7 +199,7 @@ export default function CollabPage() {
           </div>
           <div className="flex w-full justify-between items-center">
           <p className="font-poppins text-text-main text-3xl font-bold">
-            Collaborative session with @{otherUsername}
+            Collaborative session with @{currentUser == user1 ? user2 : user1}
           </p>
           <div className="flex gap-4">
             <button 
@@ -278,7 +254,11 @@ export default function CollabPage() {
         </div>
         {/* Editor */}
         <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>
-          <p className="text-white">Code Editor Placeholder</p>
+          <CollabEditor
+              socket={socket}
+              roomId={roomId}
+              userName={currentUser ?? user1 ?? "You"}
+          />
         </div>
         {!isAIAssistantOpen && <button className="hover:scale-120 cursor-pointer transition duration-300 absolute right-10 top-6" onClick={() => setIsAIAssistantOpen(true)}>
             <Sparkles className="w-6 h-6 text-white" />
@@ -319,8 +299,6 @@ export default function CollabPage() {
         isOpen={alertModal.isOpen}
         type={alertModal.type}
         onClose={closeAlert}
-        onAction={handleDisconnect}
-        onSecondaryAction={closeAlert}
       />
     </div>
   );
