@@ -1,30 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
-import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
+import { Check, Clock, X, ChevronRight, Sparkles, MessageCircleMore } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
 import CollabEditor from "./components/CollabEditor";
-
-export default function CollabPage() {
-  const router = useRouter();
-  const [roomId, setRoomId] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [user1, setUser1] = useState<string | null>(null);
-  const [user2, setUser2] = useState<string | null>(null);
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
-  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
-    isOpen: false, 
-    type: "reconnected" 
-  });
-  const [timeLeft, setTimeLeft] = useState<string>("");
-  const [connectionStatus, setConnectionStatus] = useState<string>("Connected at 00:00");
-  const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
-  const socket = getSocket();
+import ChatPopup from "./components/ChatPopup";
 
   // Dummy data for mockup
-  const question = 
+  const questionDummy = 
   {
     "id": 1,
     "title": "LRU Cache",
@@ -36,8 +21,25 @@ export default function CollabPage() {
     "HASHING"
     ],
     "published": true
-  }
+  };
 
+export default function CollabPage() {
+  const router = useRouter();
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [user1, setUser1] = useState<string | null>(null);
+  const [user2, setUser2] = useState<string | null>(null);
+  const [question, setQuestion] = useState<any>(questionDummy);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; type: AlertType }>({ 
+    isOpen: false, 
+    type: "reconnected" 
+  });
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [connectionStatus, setConnectionStatus] = useState<string>("Connected at 00:00");
+  const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
+  const socket = getSocket();
 
   useEffect(() => {
     initSocket(); // initSocket to only happen once on mount
@@ -45,23 +47,44 @@ export default function CollabPage() {
     setRoomId(params.get("roomId"));
     setUser1(params.get("username1"));
     setUser2(params.get("username2"));
-
     const userStr = sessionStorage.getItem("user");
     const parsed = userStr ? JSON.parse(userStr) : null;
     setCurrentUser(parsed?.username ?? params.get("user"));
 
+    const qnDataStrFetched = params.get("questionDataStr");
+    let qnData;
+    if (qnDataStrFetched) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(qnDataStrFetched));
+        // If backend passed an array (e.g. [ { ... } ] ), use the first element
+        qnData = Array.isArray(parsed) ? parsed[0] : parsed;
+      } catch (err) {
+        console.error("Failed to parse questionDataStr:", err, " — falling back to dummy");
+        qnData = questionDummy;
+      }
+    } else {
+      qnData = questionDummy;
+    }
+
+    console.log("Fetched question data:", qnData);
+    setQuestion(qnData);
+
+    setConnectionStatus(`Connected at ${params.get("connectedAtTime") || "00:00"}`);
+  
     // Socket event listeners
     if (socket) {
       // Connection events
-      socket.on('connect', () => {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', { 
-          hour12: false, 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-        setConnectionStatus(`Connected at ${timeString}`);
-      });
+      // socket.on('connect', () => {
+      //   const now = new Date();
+      //   const timeString = now.toLocaleTimeString('en-US', { 
+      //     hour12: false, 
+      //     hour: '2-digit', 
+      //     minute: '2-digit' 
+      //   });
+      //   setConnectionStatus(`Connected at ${timeString}`);
+      // });
+
+
 
       // Partner events
       socket.on('partnerDisconnected', () => {
@@ -89,7 +112,7 @@ export default function CollabPage() {
       // Reconnection events
       socket.on('disconnect', () => {
         setIsReconnecting(true);
-        setAlertModal({ isOpen: true, type: "disconnected" });
+          setAlertModal({ isOpen: true, type: "disconnected" });
       });
 
       socket.on('rejoinRoom', () => {
@@ -100,6 +123,7 @@ export default function CollabPage() {
       // Cleanup listeners on unmount
       return () => {
         socket.off('connect');
+        socket.off("sessionStart");
         socket.off('partnerJoined');
         socket.off('partnerDisconnected');
         socket.off('partnerLeft');
@@ -177,7 +201,7 @@ export default function CollabPage() {
           </div>
           <div className="flex w-full justify-between items-center">
           <p className="font-poppins text-text-main text-3xl font-bold">
-            Collaborative session with @{user2}
+            Collaborative session with @{currentUser == user1 ? user2 : user1}
           </p>
           <div className="flex gap-4">
             <button 
@@ -201,27 +225,34 @@ export default function CollabPage() {
       <div className="flex mt-10 bg-dark-box relative rounded-4xl h-[calc(95vh-200px)]">
         {/* Question */}
         <div className="w-1/5 px-4 py-6">
-          <p className="font-poppins text-text-main text-3xl font-bold">{question.title}</p>
-           <div className="my-4 flex flex-row bg-dark-box px-4 w-fit py-3 rounded-4xl gap-4 items-center">
-              <button
-                className={
-                  (question.difficulty === "EASY"
-                    ? "bg-green-button-hover"
-                    : question.difficulty === "MEDIUM"
-                      ? "bg-yellow-button-hover"
-                      : question.difficulty === "HARD"
-                        ? "bg-red-button-hover"
-                        : "bg-gray-300 text-black") +
-                  " px-4 py-1.5 rounded-xl font-poppins"
-                }
-              >
-                {question.difficulty ?? "Easy"}
-              </button>
-              <div className="bg-light-box w-1 h-10 rounded-4xl"></div>
-              <h1 className="font-poppins text-logo-purple font-bold">
-                {question.topics.join(" ")}</h1>
-            </div>
-          <p>{question.description}</p>
+          <p className="font-poppins text-text-main text-3xl font-bold ml-4">
+            {question?.title ?? "Loading question..."}
+          </p>
+
+          <div className="my-4 flex flex-row bg-dark-box px-4 w-fit py-3 rounded-4xl gap-4 items-center">
+            <button
+              className={
+                (question?.difficulty === "EASY"
+                  ? "bg-green-button-hover"
+                  : question?.difficulty === "MEDIUM"
+                    ? "bg-yellow-button-hover"
+                    : question?.difficulty === "HARD"
+                      ? "bg-red-button-hover"
+                      : "bg-gray-300 text-black") +
+                " px-4 py-1.5 rounded-xl font-poppins"
+              }
+            >
+              {question?.difficulty ?? "Easy"}
+            </button>
+
+            <div className="bg-light-box w-1 h-10 rounded-4xl"></div>
+
+            <h1 className="font-poppins text-logo-purple font-bold">
+              {(question?.topics ?? []).join(" ")}
+            </h1>
+          </div>
+
+          <p className="font-poppins text-lg ml-3">{question?.description ?? "Loading description..."}</p>
         </div>
         {/* Editor */}
         <div className={`bg-black transition-all duration-300 ${isAIAssistantOpen ? 'w-3/5' : 'w-4/5'}`}>
@@ -264,7 +295,25 @@ export default function CollabPage() {
           </div>
         </div>
       </div>
-      
+      {/* Floating chat button and popup */}
+      <div className="fixed bottom-7 right-10 z-40">
+        <button
+          onClick={() => setChatOpen(true)}
+          className="flex items-center gap-2 bg-logo-purple text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
+          style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
+        >
+          <span className="text-2xl"><MessageCircleMore className="w-7 h-7"/></span>
+          Chat with buddy
+        </button>
+      </div>
+      <ChatPopup
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        buddyHandle={currentUser == user1 ? user2 ?? "@buddy" : user1 ?? "@buddy"}
+        roomId={roomId}
+        socket={socket}
+        userName={currentUser ?? "You"}
+      />
       {/* Alert Modal */}
       <AlertModal
         isOpen={alertModal.isOpen}

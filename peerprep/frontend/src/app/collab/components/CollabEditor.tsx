@@ -58,7 +58,7 @@ export default function CollabEditor({
         minimap: { enabled: false },
         theme: "peerprep-dark",
         fontFamily: "var(--font-geist-mono), var(--font-mono), 'Menlo', monospace",
-        fontSize: 16,
+        fontSize: 20,
         lineNumbers: "on"
       });
     }
@@ -115,7 +115,7 @@ export default function CollabEditor({
       let h = 0;
       for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
       // Even: purple, Odd: green
-      return h % 2 === 0 ? "var(--color-logo-purple)" : "var(--color-logo-green)";
+      return h % 2 === 0 ? "var(--color-logo-purple)" : "var(--color-lg-button)";
     };
     const ensureUserStyle = (userId: string, color: string) => {
       const styleId = `cursor-style-${userId}`;
@@ -172,7 +172,7 @@ export default function CollabEditor({
         dom.style.color = '#fff';
         dom.style.padding = '1px 4px';
         dom.style.borderRadius = '3px';
-        dom.style.fontSize = '10px';
+        dom.style.fontSize = '20px';
         dom.style.transform = 'translateY(-6px)';
         dom.textContent = data.username || 'peer';
         const widget: monaco.editor.IContentWidget = {

@@ -1,6 +1,9 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { Send } from "lucide-react";
+import { MessageCircleMore } from "lucide-react";
+
+
 
 type Message = {
   sender: "me" | "buddy";
@@ -70,7 +73,7 @@ export default function ChatPopup({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ background: "#6838ad" }}>
           <div className="flex items-center gap-2">
-            <span className="text-2xl">💬</span>
+            <span className="text-2xl"><MessageCircleMore className="w-9 h-9"/></span>
             <div>
               <div className="font-bold text-white text-xl">Code buddy chat</div>
               <div className="text-xs text-[#eedaff]">{`with ${buddyHandle}`}</div>
