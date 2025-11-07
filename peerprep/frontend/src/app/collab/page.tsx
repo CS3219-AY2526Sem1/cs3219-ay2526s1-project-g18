@@ -6,6 +6,7 @@ import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
 import CollabEditor from "./components/CollabEditor";
+import ChatPopup from "./components/ChatPopup";
 
   // Dummy data for mockup
   const questionDummy = 
@@ -25,6 +26,7 @@ import CollabEditor from "./components/CollabEditor";
 export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
@@ -293,7 +295,25 @@ export default function CollabPage() {
           </div>
         </div>
       </div>
-      
+      {/* Floating chat button and popup */}
+      <div className="fixed bottom-7 right-10 z-40">
+        <button
+          onClick={() => setChatOpen(true)}
+          className="flex items-center gap-2 bg-[#6838ad] text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
+          style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
+        >
+          <span className="text-2xl">💬</span>
+          Chat with buddy
+        </button>
+      </div>
+      <ChatPopup
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        buddyHandle={currentUser == user1 ? user2 ?? "@buddy" : user1 ?? "@buddy"}
+        roomId={roomId}
+        socket={socket}
+        userName={currentUser ?? "You"}
+      />
       {/* Alert Modal */}
       <AlertModal
         isOpen={alertModal.isOpen}
