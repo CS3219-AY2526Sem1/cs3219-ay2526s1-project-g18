@@ -270,8 +270,6 @@ export default function CollabPage() {
         isOpen={alertModal.isOpen}
         type={alertModal.type}
         onClose={closeAlert}
-        onAction={handleDisconnect}
-        onSecondaryAction={closeAlert}
       />
     </div>
   );
