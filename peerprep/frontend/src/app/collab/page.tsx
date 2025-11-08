@@ -27,6 +27,7 @@ export default function CollabPage() {
   const router = useRouter();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [hasUnread, setHasUnread] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [user1, setUser1] = useState<string | null>(null);
   const [user2, setUser2] = useState<string | null>(null);
@@ -168,6 +169,22 @@ export default function CollabPage() {
     setAlertModal({ isOpen: false, type: alertModal.type });
   };
 
+  useEffect(() => {
+    if (!socket) return;
+    const handleIncoming = (data: { text: string; sender: string; time: string; senderId?: string }) => {
+      if (data.senderId && socket.id && data.senderId === socket.id) return; // skip own
+      if (!chatOpen) setHasUnread(true); // mark unread
+    };
+    socket.on("chatMessage", handleIncoming);
+    return () => {
+      socket.off("chatMessage", handleIncoming);
+    };
+  }, [socket, chatOpen]);
+  
+  useEffect(() => {
+    if (chatOpen) setHasUnread(false);
+  }, [chatOpen]);  
+
   return (
     <div className="bg-dark-blue-bg min-h-screen flex flex-col pt-7 px-6">
       <div className="flex items-start justify-between px-10">
@@ -296,16 +313,22 @@ export default function CollabPage() {
         </div>
       </div>
       {/* Floating chat button and popup */}
-      <div className="fixed bottom-7 right-10 z-40">
-        <button
-          onClick={() => setChatOpen(true)}
-          className="flex items-center gap-2 bg-logo-purple text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all"
-          style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
-        >
-          <span className="text-2xl"><MessageCircleMore className="w-7 h-7"/></span>
-          Chat with buddy
-        </button>
-      </div>
+      {!chatOpen && (
+        <div className="fixed bottom-7 right-10 z-40">
+          <button
+            onClick={() => setChatOpen(true)}
+            className="flex items-center gap-2 bg-logo-purple text-white text-lg font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-[#6235b1] transition-all relative"
+            style={{ boxShadow: "0 7px 20px 2px #2823554d" }}
+          >
+            <span className="text-2xl"><MessageCircleMore className="w-7 h-7"/></span>
+            Chat with buddy
+            {hasUnread && (
+              <span style={{ position: 'absolute', top: -3, right: -3, width: 18, height: 18, background: '#29EAC4', borderRadius: '50%', display: 'block', boxShadow: '0 0 0 2px #2d2d3c' }} />
+            )}
+          </button>
+        </div>
+      )}
+
       <ChatPopup
         open={chatOpen}
         onClose={() => setChatOpen(false)}

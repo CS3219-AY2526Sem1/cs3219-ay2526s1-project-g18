@@ -27,9 +27,6 @@ export default function CollabEditor({
   // Monaco setup and THEME
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (typeof (window as any).MonacoEnvironment === "undefined") {
-      (window as any).MonacoEnvironment = { getWorkerUrl: () => "/monaco/editor.worker.js" };
-    }
     if (containerRef.current && !editorRef.current) {
       monaco.editor.defineTheme("peerprep-dark", {
         base: "vs-dark",
