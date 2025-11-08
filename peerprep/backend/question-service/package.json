@@ -5,11 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf dist",
     "start": "node src/index.ts",
-    "watch:build": "tsc --watch",
-    "watch:server": "nodemon --watch dist dist/index.js",
-    "dev": "npm run clean && npm run build && npm run watch:build & npm run watch:server",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
     "lint": "eslint 'src/**/*.ts'"
   },
   "keywords": [],
