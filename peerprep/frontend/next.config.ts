@@ -1,3 +1,4 @@
+"use client"
 import type { NextConfig } from "next";
 // @ts-ignore
 import MonacoEditorWebpackPlugin from "monaco-editor-webpack-plugin";

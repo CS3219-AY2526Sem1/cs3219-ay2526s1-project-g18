@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { getSocket, initSocket } from "@/app/socket/socket";
 import { Check, Clock, X, ChevronRight, Sparkles, MessageCircleMore } from "lucide-react";
 import AlertModal, { AlertType } from "./components/AlertModal";
-import CollabEditor from "./components/CollabEditor";
 import ChatPopup from "./components/ChatPopup";
+import dynamic from "next/dynamic";
 
   // Dummy data for mockup
   const questionDummy = 
@@ -41,6 +41,7 @@ export default function CollabPage() {
   const [connectionStatus, setConnectionStatus] = useState<string>("Connected at 00:00");
   const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
   const socket = getSocket();
+  const CollabEditor = dynamic(() => import("./components/CollabEditor"), { ssr: false });
 
   useEffect(() => {
     initSocket(); // initSocket to only happen once on mount
