@@ -2,7 +2,7 @@ import client from "../cloud-services/redis.js";
 import fs from "fs";
 import { sendMatchNotification, sendTimeoutNotification, sendJoinNoDifficultyNotification, sendJoinGeneralNotification, sendErrorNotification, closeSSEConnection} from "./notification-controller.js";
 
-const COLLAB_API_BASE = "http://localhost:3003";
+const COLLAB_API_BASE = process.env.COLLAB_SERVICE_API_URL ?? "http://localhost:3003";
 
 // Insert user id and question criteria into queue, register SSE connection
 export async function joinQueue(req, res) {
