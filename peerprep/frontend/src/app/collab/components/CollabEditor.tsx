@@ -3,6 +3,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 
+declare global{
+  var currentCode: string
+  var currentQuestion: string
+}
+
 type CollabEditorProps = {
   socket?: any;
   roomId: string | null;
@@ -228,6 +233,20 @@ export default function CollabEditor({
       if (debounceTimerRef.current) { clearTimeout(debounceTimerRef.current); debounceTimerRef.current = null; }
     };
   }, [socket, roomId]);
+
+  useEffect(() => {
+    // whenever content changes, store latest in a global var or callback
+    const editor = editorRef.current;
+    if (!editor) return;
+    const model = editor.getModel();
+    if (!model) return;
+
+    const sub = model.onDidChangeContent(() => {
+      window.currentCode = model.getValue();
+    });
+
+    return () => sub.dispose();
+  }, []);
 
   return (
     <main className="flex flex-col items-center justify-center w-full h-full">

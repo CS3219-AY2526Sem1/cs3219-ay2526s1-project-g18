@@ -18,7 +18,11 @@ export default function AiAssistant ({
 
   const submitMessage = async (text: string) => {
     if (!text.trim()) return;
-    await sendMessage({ text });
+    text = "User prompt: " + text
+    const latestCode = "\nCode: " + currentCode
+    const question = "\nQuestion: " + currentQuestion
+    const message = text + latestCode
+    await sendMessage({ text: message });
   };
 
   const [input, setInput] = useState("");
@@ -96,7 +100,7 @@ export default function AiAssistant ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={status !== "ready"}
-          className="w-full bg-dark-box text-white px-4 py-2 rounded-lg resize-none h-24 border-none outline-none"
+          className="flex-1 overflow-y-auto w-full bg-dark-box text-white px-4 py-2 rounded-lg resize-none h-24 border-none outline-none"
           maxLength={maxLength}
           placeholder={getPlaceholderText()}
         ></input>

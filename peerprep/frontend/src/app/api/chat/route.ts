@@ -9,18 +9,18 @@ export async function POST(req: Request) {
     if (!process.env.GEMINI_API_KEY) {
       return new Response('API key not configured', { status: 500 });
     }
-
     const google = createGoogleGenerativeAI({
-      apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY,
     });
 
-    const result = streamText({
-      model: google('gemini-2.5-flash'),
-      system: 'You are a helpful assistant named PeerPrep AI that helps users prepare for coding interviews by answering questions, providing explanations, and offering coding examples. Always respond in a concise and clear manner.',
-      messages,
-    });
+    // const result = streamText({
+    //   model: google('gemini-2.5-flash'),
+    //   system: 'You are a helpful assistant named PeerPrep AI that helps users prepare for coding interviews by answering questions, providing explanations, and offering coding examples. Always respond in a concise and clear manner.',
+    //   messages,
+    // });
 
-    return result.toUIMessageStreamResponse();
+    //return result.toUIMessageStreamResponse();
+    return new Response("yep! working as intended lol", { status: 200 })
   } catch (error) {
     console.error('Error in chat API:', error);
     return new Response('Internal server error', { status: 500 });
