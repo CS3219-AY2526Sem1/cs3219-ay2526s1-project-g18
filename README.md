@@ -40,3 +40,6 @@ Our architecture diagram below shows how all our 5 microservices interact
 Here is how to set up our repository and get the services running for development
 1. Clone our repository
 2. Run the frontend using npm run dev
+
+## AI Use Declaration
+Our AI use declaration can be found in `./ai/ai_log.md`
