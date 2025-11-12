@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AttemptStatus {
+  OUT_OF_TIME
+  SOLVED
+  DISCONNECTED
+}
+
+model QuestionAttempt {
+  attemptId       String        @id @default(uuid())
+  userId          String
+  connectedAtTime DateTime
+  sharedCode      String?
+  qnData          Json
+  completedStatus AttemptStatus
+  userNames       String[]
+
+  @@index([userId])
+  @@index([userId, connectedAtTime])
+}
+
+model UserAttemptSummary {
+  userId         String  @id
+  totalAttempted Int     @default(0)
+  totalSolved    Int     @default(0)
+}
