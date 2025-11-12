@@ -42,4 +42,17 @@ Here is how to set up our repository and get the services running for developmen
 2. Run the frontend using npm run dev
 
 ## AI Use Declaration
+AI Use Summary
+Tools: ChatGPT (GPT-5 Thinking), GitHub Copilot (GPT-5 Mini), Claude Sonnet 4.5
+Prohibited phases avoided: requirements elicitation; architecture/design decisions.
+Allowed uses:
+- Generated initial implementation and debugging fixes for popup chat and collaborative editor components in React.
+- Implemented AI assistant message handling functions, timer boilerplate, and parts of the AI assistant UI.
+- Suggested setup steps and boilerplate for PostgreSQL + Prisma + Express backend.
+- Generated Lua scripts for atomic queue/room operations and SSE connection helpers.
+- Drafted a class based on specified data structure for collab service data persistence (snapshot, awareness, updatedAt).
+- Provided example SSE listener code and safe teardown structure for the matching service.
+- Suggested refactorings for parsing functions and provided test edge-case ideas.
+
+Verification: All AI outputs reviewed, edited, and tested by the authors.
 Our AI use declaration can be found in `./ai/ai_log.md`
