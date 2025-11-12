@@ -1,3 +1,10 @@
+-- AI Assistance Disclosure:
+-- Tool: Copilot (model: GPT-5 Mini), date: 2025-10-26
+-- Scope: Generated an LUA script and modification to joinQueue to allow for joining a queue to be atomic.
+--
+-- Author review: I validated correctness and style.
+
+
 -- join_queue.lua
 -- KEYS[1] = user key (e.g. "users:123")
 -- KEYS[2] = queue criteria (e.g. "queue:specific:topic:0")
