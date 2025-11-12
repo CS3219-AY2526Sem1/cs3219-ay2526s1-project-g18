@@ -29,6 +29,7 @@
     "@types/react-dom": "^19",
     "@types/socket.io": "^3.0.1",
     "@types/socket.io-client": "^1.4.36",
+    "monaco-editor-webpack-plugin": "^7.1.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

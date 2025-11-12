@@ -1,6 +1,6 @@
 import { client, io , persistenceManager} from '../server.js';
 import { v4 } from 'uuid';
-const QUESTION_API_URL = 'https://cs3219-ay2526s1-project-g18-354103976519.asia-southeast1.run.app/api/';
+const QUESTION_API_URL = process.env.QUESTION_SERVICE_API_URL
 
 
 function convertDifficultyToString(difficulty) {

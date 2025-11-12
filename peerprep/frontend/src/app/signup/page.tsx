@@ -28,7 +28,7 @@ export default function SignUpPage() {
 
         // API CALL TO BACKEND TO TRY TO SIGN UP
         try {
-            const response = await fetch('http://localhost:3001/api/signup', { // REPLACE WITH ACTUAL BACKEND URL
+            const response = await fetch(`${process.env.NEXT_PUBLIC_USER_SERVICE_API_URL}/api/signup`, { // REPLACE WITH ACTUAL BACKEND URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, username, password, confirmPassword }),

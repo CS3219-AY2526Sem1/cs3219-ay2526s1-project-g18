@@ -15,7 +15,7 @@ export function initSocket() {
     const parsedUser = user ? JSON.parse(user) : null;
     const token = sessionStorage.getItem("token");
 
-    socket = io('http://localhost:3003', 
+    socket = io(process.env.NEXT_PUBLIC_COLLAB_SERVICE_API_URL ?? "http://localhost:3003", 
         { auth: { token }, 
         autoConnect: true,
         reconnection: true,
