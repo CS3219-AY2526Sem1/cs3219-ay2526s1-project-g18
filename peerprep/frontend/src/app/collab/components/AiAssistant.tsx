@@ -6,6 +6,7 @@ import { useChat } from "@ai-sdk/react";
 type AiAssistantProps = {
   open: boolean;
   onClose: () => void;
+  question: 
 };
 
 export default function AiAssistant ({
