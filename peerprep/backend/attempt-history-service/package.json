@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node src/index.ts",
-    "dev": "nodemon --watch \"src/**/*.ts\" --exec \"node --loader ts-node/esm\" src/index.ts",
+    "dev": "nodemon --watch \"src/**/*.ts\" --exec \"node --no-warnings=ExperimentalWarning --loader ts-node/esm\" src/index.ts",
     "lint": "eslint 'src/**/*.ts'"
   },
   "keywords": [],
