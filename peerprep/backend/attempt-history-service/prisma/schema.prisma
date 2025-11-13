@@ -30,6 +30,7 @@ model QuestionAttempt {
 
   @@index([userId])
   @@index([userId, connectedAtTime])
+  @@unique([userId, connectedAtTime])
 }
 
 model UserAttemptSummary {

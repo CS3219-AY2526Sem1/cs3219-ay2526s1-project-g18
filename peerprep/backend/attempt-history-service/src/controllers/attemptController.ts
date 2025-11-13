@@ -6,14 +6,10 @@
 
 
 import type { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
-import e from 'express';
-// import the questionAttempt model from prisma client
-
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Adds a new question attempt record
 export const addQuestionAttempt = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId, sharedCode, completedStatus, connectedAtTime, qnData, userNames } = req.body;
@@ -26,26 +22,24 @@ export const addQuestionAttempt = async (req: Request, res: Response, next: Next
     const connectedAt = new Date(connectedAtTime);
 
     const newAttempt = await prisma.$transaction(async (tx) => {
-      // 1) create the attempt
+      // Attempt to create new attempt
       const attempt = await tx.questionAttempt.create({
         data: {
           userId,
           sharedCode: sharedCode ?? null,
-          completedStatus,                    // enum string: "SOLVED" | "OUT_OF_TIME" | "DISCONNECTED"
+          completedStatus,
           connectedAtTime: connectedAt,
           qnData,
           userNames,
         },
       });
 
-      // 2) upsert the summary: atomically create-or-increment counters
+      // Upsert summary
       await tx.userAttemptSummary.upsert({
         where: { userId },
         update: {
           totalAttempted: { increment: 1 },
-          ...(completedStatus === 'SOLVED'
-            ? { totalSolved: { increment: 1 } }
-            : {}),
+          ...(completedStatus === 'SOLVED' ? { totalSolved: { increment: 1 } } : {}),
         },
         create: {
           userId,
@@ -58,7 +52,17 @@ export const addQuestionAttempt = async (req: Request, res: Response, next: Next
     });
 
     return res.status(201).json(newAttempt);
+
   } catch (error) {
+    // Handle duplicate attempt (unique constraint) gracefully
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      // Duplicate attempt detected
+      return res.status(409).json({
+        error: 'Attempt already exists for this user at the given time.',
+      });
+    }
+
+    // Anything else
     next(error);
   }
 };
