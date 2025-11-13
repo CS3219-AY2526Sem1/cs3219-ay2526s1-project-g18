@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.29",
-    "@ai-sdk/react": "^2.0.89",
+    "@ai-sdk/react": "^2.0.93",
     "ai": "^5.0.89",
     "lucide-react": "^0.544.0",
     "monaco-editor": "^0.54.0",
