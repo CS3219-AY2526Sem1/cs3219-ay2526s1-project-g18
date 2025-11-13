@@ -1,3 +1,10 @@
+/*
+AI Assistance Disclosure:
+Tool: ChatGPT (model: GPT‑5 Thinking), date: 2025-10-30, 2025-11-1
+Scope: Implementing boilerplate for timeouts and clearing timeouts, atomizing existing joinRoom code logic using a Lua script
+Author review: I validated correctness and added on a lot more necessary functionality beyond the boilerplate and updated the Lua script following later updates to joinRoom logic.
+*/
+
 import http from "http";
 import index from "./index.js";
 import redis from "redis";
@@ -167,7 +174,7 @@ io.on("connection", async (socket) => {
 
         disconnectTimers.set(userId, timer); // store the timer so it can be cleared if user reconnects
 
-        // if the room is now empty, set redis TTL to delete room given time (extra buffer to give time to store into mongo after user leaves permanently)
+        // if the room is now empty, set redis TTL to delete room given time (extra buffer to give time to store into qn attempt history db after user leaves permanently)
         const userCount = await client.sCard(`room:${roomId}:users`);
         if (userCount === 0) {
 
@@ -194,7 +201,7 @@ io.on("connection", async (socket) => {
     });
 
     // ROOM JOINING LOGIC
-    //atomic operations for joinRoom and lua script by chatgpt
+    //atomic operations for joinRoom and lua script by chatgpt 
     const joinScript = `
         -- KEYS[1] = infoKey (hash)
         -- KEYS[2] = usersKey (set)
