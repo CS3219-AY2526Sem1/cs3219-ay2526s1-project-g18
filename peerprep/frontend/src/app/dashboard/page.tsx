@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation"
 import { getSocket, initSocket } from "../socket/socket";
 import { get } from "http";
 
+const ATTEMPT_HISTORY_API_URL = process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_API_URL || "http://localhost:3000/attempts/";
+
 
 
 //dummy user details
@@ -24,6 +26,8 @@ export default function DashboardPage() {
   const[token,setToken] = useState<string>("")
   const[userName, setUserName] =  useState<string>("")
   const[userId, setUserId] = useState<number | null>(null)
+  const[totalAttempts, setTotalAttempts] = useState<string>("")
+  const[successfulAttempts, setSuccessfulAttempts] = useState<string>("")
 
  // Make sure user is logged in + get userId and also userName
   useEffect(() => {
@@ -48,8 +52,40 @@ export default function DashboardPage() {
         const socket = getSocket();
         socket?.disconnect()
     }, [])
+
+    // retrieve the attempt history service analyitics data when userId is set
+    const getAttemptHistorySummary = async (id: number) => {
+      const url = `${ATTEMPT_HISTORY_API_URL}summary/${id}`;
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) {
+          console.log("Failed to fetch attempt history summary data:", response.statusText);
+            setTotalAttempts('0');
+            setSuccessfulAttempts('0');
+        return;
+        }
+        const data = await response.json();
+        console.log("Attempt history summary data:", data);
+        setTotalAttempts(data.totalAttempted.toString());
+        setSuccessfulAttempts(data.totalSolved.toString());
+      } catch (error) {
+        console.error("Error fetching attempt history summary data:", error);
+        return;
+      }
+    };
+
+    useEffect(() => {
+      if (userId === null) return;
+      getAttemptHistorySummary(userId);
+    }, [userId]);
+
   return (
-    <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12">
+    <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12 overflow-hidden">
 
       <div className="flex items-start justify-between">
         <div className="flex-col">
@@ -73,14 +109,17 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col">
-            <p className="text-text-main font-poppins text-5xl p-3">Dive into a problem
+            <p className="text-text-main font-poppins text-3xl p-3">Dive into a problem
             </p>
             <MatchingWidget/>
           </div>
           <div>
-            <p className="text-text-main font-poppins text-5xl p-3">Question History
+            <p className="text-text-main font-poppins text-3xl p-3">Question History
             </p>
-            <QuestionHistoryWidget/>
+            <QuestionHistoryWidget
+              totalAttempts={totalAttempts}
+              successfulAttempts={successfulAttempts}
+            />
           </div>
         </div>
       </div> 
