@@ -49,7 +49,7 @@ export default function DashboardPage() {
         socket?.disconnect()
     }, [])
   return (
-    <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12">
+    <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12 overflow-hidden">
 
       <div className="flex items-start justify-between">
         <div className="flex-col">
@@ -73,12 +73,12 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col">
-            <p className="text-text-main font-poppins text-5xl p-3">Dive into a problem
+            <p className="text-text-main font-poppins text-3xl p-3">Dive into a problem
             </p>
             <MatchingWidget/>
           </div>
           <div>
-            <p className="text-text-main font-poppins text-5xl p-3">Question History
+            <p className="text-text-main font-poppins text-3xl p-3">Question History
             </p>
             <QuestionHistoryWidget/>
           </div>
