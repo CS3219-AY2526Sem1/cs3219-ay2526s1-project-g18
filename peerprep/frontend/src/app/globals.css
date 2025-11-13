@@ -11,6 +11,7 @@
   --color-light-box: var(--light-box);
   --color-darkest-box: var(--darkest-box);
   --color-black-box: var(--black-box);
+  --color-green-box: var(--green-box);
 
   --color-logo-purple: var(--logo-purple);
   --color-logo-green: var(--logo-green);
@@ -76,6 +77,7 @@
   --light-box: #6e5ae24a;
   --darkest-box: #21195644;
   --black-box: #00000042;
+  --green-box:#0b6d598e;
 
   /*logo colors*/
   --logo-purple: #6E5AE2;

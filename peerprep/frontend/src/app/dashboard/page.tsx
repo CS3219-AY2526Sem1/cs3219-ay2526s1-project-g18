@@ -7,16 +7,9 @@ import { useRouter } from "next/navigation"
 import { getSocket, initSocket } from "../socket/socket";
 import { get } from "http";
 
-const ATTEMPT_HISTORY_API_URL = process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_API_URL || "http://localhost:3000/attempts/";
+const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
 
 
-
-//dummy user details
-// const dummyUser = JSON.stringify({
-//     id: 1,
-//     username: "coolguy123"
-// })
-// const token = "dummyToken" 
 
 
 
@@ -25,7 +18,7 @@ export default function DashboardPage() {
   const[user, setUser] = useState<any>(null)
   const[token,setToken] = useState<string>("")
   const[userName, setUserName] =  useState<string>("")
-  const[userId, setUserId] = useState<number | null>(null)
+  const[userId, setUserId] = useState<any>(null)
   const[totalAttempts, setTotalAttempts] = useState<string>("")
   const[successfulAttempts, setSuccessfulAttempts] = useState<string>("")
 
@@ -45,7 +38,7 @@ export default function DashboardPage() {
                 console.error("Invalid user data in session storage:", parsedUser);
             } else {
                 setUserName(parsedUser.username);
-                setUserId(parseInt(parsedUser.id));
+                setUserId(parsedUser.id);
             }
         }
         initSocket();
@@ -54,7 +47,7 @@ export default function DashboardPage() {
     }, [])
 
     // retrieve the attempt history service analyitics data when userId is set
-    const getAttemptHistorySummary = async (id: number) => {
+    const getAttemptHistorySummary = async (id: string) => {
       const url = `${ATTEMPT_HISTORY_API_URL}summary/${id}`;
       try {
         const response = await fetch(url, {
@@ -81,7 +74,8 @@ export default function DashboardPage() {
 
     useEffect(() => {
       if (userId === null) return;
-      getAttemptHistorySummary(userId);
+      console.log(userId.toString());
+      getAttemptHistorySummary(userId.toString());
     }, [userId]);
 
   return (
