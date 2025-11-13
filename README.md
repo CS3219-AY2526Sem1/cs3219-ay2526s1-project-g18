@@ -51,7 +51,7 @@ Allowed uses:
 - Suggested setup steps and boilerplate for PostgreSQL + Prisma + Express backend.
 - Generated Lua scripts for atomic queue/room operations and SSE connection helpers.
 - Drafted a class based on specified data structure for collab service data persistence (snapshot, awareness, updatedAt).
-- Provided example SSE listener code and safe teardown structure for the matching service.
+- Provided examples for SSE listener code listener set up and teardown for the matching service.
 - Suggested refactorings for parsing functions and provided test edge-case ideas.
 
 Verification: All AI outputs reviewed, edited, and tested by the authors.
