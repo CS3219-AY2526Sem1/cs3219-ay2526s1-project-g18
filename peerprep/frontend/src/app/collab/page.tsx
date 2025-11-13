@@ -314,7 +314,7 @@ export default function CollabPage() {
             </p>
           </div>
  
-          <div className="text-white flex-1 px-4 py-4 flex flex-col justify-between overflow-hidden">
+          <div className="text-white flex-1 px-4 py-4 flex flex-col justify-between overflow-hidden bg-dark-box">
             <div className="flex flex-col gap-4 flex-shrink-0">
               <div className="bg-dark-box rounded-lg px-4 py-2 cursor-pointer hover:bg-opacity-80 transition-colors">Explain all current code.</div>
               <div className="bg-dark-box rounded-lg px-4 py-2 cursor-pointer hover:bg-opacity-80 transition-colors">Explain my buddy's code</div>
@@ -322,7 +322,7 @@ export default function CollabPage() {
             </div>
             <div className="mt-4 flex-shrink-0">
               <textarea
-                className="w-full bg-dark-box text-white px-4 py-2 rounded-lg resize-none h-24 border-none outline-none"
+                className="w-full bg-black-box text-white px-4 py-2 rounded-xl resize-none h-24 border-none outline-none"
                 placeholder="Ask me anything"
               ></textarea>
             </div>
