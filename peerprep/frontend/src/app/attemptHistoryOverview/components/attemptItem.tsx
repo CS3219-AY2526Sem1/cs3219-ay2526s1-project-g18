@@ -6,6 +6,7 @@ import {CircleCheck, Unplug, Timer} from "lucide-react"
 
 // props: completionStatus, dateString, questionTitle, otheUserName
 interface AttemptItemProps {
+    attemptId: string;
     completionStatus: string;
     dateString: string;
     questionTitle: string;
@@ -30,8 +31,10 @@ export default function AttemptItem(props: AttemptItemProps) {
                     </div>
                 </div>
             </div>
-            <button className="ml-auto bg-black-box text-white p-4 rounded-3xl font-poppins text-2xl hover:bg-darkest-box"
-                onClick={() => { router.push('attemptHistoryOverview/attemptHistory')}}>
+            <button
+                className="ml-auto bg-black-box text-white p-4 rounded-3xl font-poppins text-2xl hover:bg-darkest-box"
+                onClick={() => { router.push(`/attemptHistoryOverview/attemptHistory?attemptId=${props.attemptId}`); }}
+            >
                 View Details
             </button>
         </div>
