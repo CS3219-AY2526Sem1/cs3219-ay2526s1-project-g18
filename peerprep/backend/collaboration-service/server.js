@@ -152,7 +152,15 @@ io.on("connection", async (socket) => {
              
             // STORE ROOM INFO TO ATTEMPT HISTORY W USERID -> ensures premature disconnection and incomplete code is only reflected for this user 
             
-            await persistenceManager.handleClientLeftRoom(roomId, userId);
+            // provide fallback editor text (used by non-Yjs editor fallback) if available
+            try {
+              const roomEntry = roomText.get(roomId);
+              const fallbackContent = roomEntry ? roomEntry.content : null;
+              await persistenceManager.handleClientLeftRoom(roomId, userId, fallbackContent);
+            } catch (err) {
+              console.error('Error calling handleClientLeftRoom with fallback content', err);
+              await persistenceManager.handleClientLeftRoom(roomId, userId);
+            }
             // now if the status is solved, we should delete it so that the other user can continue without being affected
             const roomStatus = await client.hGet(`room:${roomId}:info`, 'status');
             if (roomStatus === 'solved') {
