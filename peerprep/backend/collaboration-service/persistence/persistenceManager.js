@@ -302,22 +302,35 @@ async closeRoom(roomId) {
       payload.qnData &&
       payload.userNames;
 
-    if (userProgressState === 'solved') {
-      console.log('User finished the room successfully');
-      if (canNotify) {
-        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
-        // TODO: call Attempt History Service here (await fetch/HTTP client)
-      } else {
-        console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
-      }
+    if (!canNotify) {
+    console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/attempts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Attempt History Service returned error:', response.status, errorText);
     } else {
-      console.log('User did not finish the room in time');
-      if (canNotify) {
-        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
-        // TODO: call Attempt History Service here
-      } else {
-        console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
-      }
+      const data = await response.json();
+      console.log('Successfully posted attempt to Attempt History Service:', data);
+    }
+  } catch (err) {
+    console.error('Error posting to Attempt History Service', err);
+  }
+
+  if (userProgressState === 'solved') {
+    console.log(`User finished the room successfully`);
+  } else {
+    console.log('User did not finish the room in time');
   }
 }
 

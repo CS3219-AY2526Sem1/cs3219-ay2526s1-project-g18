@@ -473,9 +473,21 @@ export default function MatchingNotificationsPage() {
         </div>
       )}
       {matchingState === 'error' && (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="p-8 bg-white rounded shadow">
-            Error: {String(errorData ?? 'Unknown')}. <button onClick={() => onDisconnectButton()} className="ml-4 text-red-600">Disconnect</button>
+        <div className="bg-dark-blue-bg h-screen w-screen flex flex-col justify-center items-center pt-7 pl-12 pr-12">
+          <div className="bg-darkest-box w-5xl rounded-3xl flex flex-col justify-center items-center p-6 gap-4">
+            <div className="flex flex-row">
+              <span className="font-inter text-logo-purple text-6xl font-bold pt-5 ">Error: QuestionNotFound</span>
+            </div>
+            <p className="font-poppins text-text-main text-4xl text-center font-medium m-3">
+             Sorry, we are unable to find you a question with that specified combination. Please try again when we have more questions up!</p>
+
+            <p className="font-poppins text-2xl text-text-dark-purple"></p>
+            <button className="bg-black-box p-5 font-poppins text-4xl text-text-main rounded-lg mt-5 flex items-center gap-2
+                hover:bg-blue-button-hover hover:text-white"
+                    onClick={() => { exitPageNoDisconnect(); }}>
+              <ArrowUpLeft className="w-8 h-8"/>
+              <span>Exit to dashboard</span>
+            </button>
           </div>
         </div>
       )}
