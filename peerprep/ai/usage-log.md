@@ -298,3 +298,20 @@ ChatGPT provided a step-by-step guide with copy-paste terminal commands to execu
 - [ ] Rejected
 ### Author Notes:
 Some commands were wrong/outdated so I used online resources to help me debug when chatgpt went wrong.
+
+# AI Problem Solving
+-----------------
+### Date/Time:
+2025-11-13
+### Tool:
+Gemini (model: 2.5 Flash)
+### Prompt/Command:
+Asked Gemini to generate a function to help with entering a newline only on shift + enter in textarea object
+### Output Summary:
+Gemini generated a handleKeyDown function.
+### Action Taken:
+- [x] Accepted as-is
+- [ ] Modified
+- [ ] Rejected
+### Author Notes:
+I validated for correctness and used it as is.
