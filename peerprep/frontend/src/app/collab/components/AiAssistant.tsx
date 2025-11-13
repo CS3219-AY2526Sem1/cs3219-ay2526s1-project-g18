@@ -6,12 +6,13 @@ import { useChat } from "@ai-sdk/react";
 type AiAssistantProps = {
   open: boolean;
   onClose: () => void;
-  question: 
+  question: string
 };
 
 export default function AiAssistant ({
   open,
   onClose,
+  question
 }: AiAssistantProps) {
   const maxLength = 50
   const { messages, status, sendMessage } = useChat();
@@ -20,9 +21,9 @@ export default function AiAssistant ({
   const submitMessage = async (text: string) => {
     if (!text.trim()) return;
     text = "User prompt: " + text
-    const latestCode = "\nCode: " + currentCode
-    const question = "\nQuestion: " + currentQuestion
-    const message = text + latestCode
+    const latestCodeString = "\nCode: " + currentCode
+    const questionString = "\nQuestion: " + question
+    const message = text + latestCodeString + questionString
     await sendMessage({ text: message });
   };
 

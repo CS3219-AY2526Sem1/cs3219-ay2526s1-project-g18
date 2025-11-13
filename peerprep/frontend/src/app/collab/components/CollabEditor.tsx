@@ -249,6 +249,7 @@ export default function CollabEditor({
 
   useEffect(() => {
     // Pass current code as global variable
+    window.currentCode = "";
     const editor = editorRef.current;
     if (!editor) return;
     const model = editor.getModel();
