@@ -1,3 +1,12 @@
+//AI Assistance Disclosure:
+//Tool: Copilot (model: GPT-5 Mini), date: 2025-10-26
+//Scope: Generated register client, generic send notification function, safeWrite function and
+//closeSSEConnection function, in addition to the sseClients hashmap.
+
+//Author review: I validated correctness and added more functions based on the generic one.
+//Adjusted parameters to suit the user idKey, formating of values passed by the notifications,
+//edited functions to be suit the specific event type.
+
 import { CLOSE_EVENT, ERROR_EVENT, JOIN_GENERAL_QUEUE_EVENT, JOIN_NO_DIFFICULTY_QUEUE_EVENT, MATCH_EVENT, TIMEOUT_EVENT } from '../util/sse-event-names.js';
 import { leaveQueues } from './queue-controller.js';
 
