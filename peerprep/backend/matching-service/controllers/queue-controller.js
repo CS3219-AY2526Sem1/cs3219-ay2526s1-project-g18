@@ -275,7 +275,7 @@ export async function handleNoDifficultyQueueDifficulty(idKey1, idKey2) {
 }      
 
 async function notifyCollabService(topic, difficulty, id1, id2, idKey1, idKey2) {
-    const body = { topic: topic, difficulty: difficulty, userId1: id1, userId2: id2 };
+    const body = { topic: topic, difficulty: difficulty.toString(), userId1: id1, userId2: id2 };
     try{
         const response = await fetch(`${COLLAB_API_BASE}/create-room`, {
             method: "POST",
