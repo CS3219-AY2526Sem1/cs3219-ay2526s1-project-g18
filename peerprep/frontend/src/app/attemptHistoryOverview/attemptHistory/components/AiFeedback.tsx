@@ -253,7 +253,7 @@ export default function AiFeedback({codeAttempt, question}: {codeAttempt: string
   }
 
   return (
-    <div className="flex flex-col w-1/4 h-full">
+    <div className="flex flex-col w-full h-full">
       <div className="pt-4 pb-4 px-4 bg-light-box rounded-tr-3xl flex items-center gap-2">
         <p className="text-white flex items-center gap-2 font-poppins text-xl font-bold">
           AI Feedback
