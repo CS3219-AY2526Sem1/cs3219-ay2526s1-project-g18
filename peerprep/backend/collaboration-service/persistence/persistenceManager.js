@@ -19,6 +19,8 @@
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 
+const ATTEMPT_HISTORY_SERVICE_URL = process.env.ATTEMPT_HISTORY_SERVICE_URL || 'http://localhost:3004/attempts';
+
 /**
  * PersistenceManager: manages in-memory Y.Doc + Awareness per room
  * and persists Y state + encoded awareness (binary -> base64) to Redis.
@@ -138,7 +140,7 @@ export default class PersistenceManager {
   }
 
   /** Update own and Attempt History Service when one client leaves the room */
-  async handleClientLeftRoom(roomId, clientIdToLeave) {
+  async handleClientLeftRoom(roomId, clientIdToLeave, fallbackContent = null) {
     let entry = this.docs.get(roomId);
 
     if (!entry) {
@@ -174,7 +176,7 @@ export default class PersistenceManager {
 
     // attempt to notify Attempt History Service (your _postAttempt... should be idempotent)
     try {
-      await this._postAttemptToQuestionHistoryService(roomId, clientIdToLeave);
+      await this._postAttemptToQuestionHistoryService(roomId, clientIdToLeave, fallbackContent);
     } catch (e) {
       console.error('Error notifying Attempt History Service on client leaving room', e);
     }
@@ -184,9 +186,10 @@ export default class PersistenceManager {
   /** Helper function to get all fields from persistent storage to save to Attempt History Service
    * Returns a payload for the Attempt History Service
   */
-  async _getRoomPersistentInfo(roomId, userId) {
+  async _getRoomPersistentInfo(roomId, userId, fallbackContent = null) {
     // The in-memory map stores entries of the form { doc, awareness, interval, ... }
     const entry = this.docs.get(roomId);
+    const questionDataStr = await this.client.hGet(`room:${roomId}:info`, 'question');
 
     // room info in Redis (may return an object with fields as strings)
     const roomInfo = await this.client.hGetAll(`room:${roomId}:info`);
@@ -198,7 +201,7 @@ export default class PersistenceManager {
     let sharedCode = "NONE";
     let completedStatus = "DISCONNECTED";
     let connectedAtTime = null;
-    let qnData = "hello"; // placeholder till qn api implemented
+    let qnData = null; // placeholder till qn api implemented
     let userNames = null;
 
     // If we have a loaded Y.Doc entry, extract the text from a Y.Text type.
@@ -209,8 +212,22 @@ export default class PersistenceManager {
         if (ytext) {
           sharedCode = ytext.toString();
         }
+        console.log(`Extracted sharedCode for room ${roomId}: ${sharedCode}`);
       } catch (err) {
         console.error("Error extracting text from Y.Doc for room", roomId, err);
+      }
+    }
+    // If Y.Doc yielded no text, fall back to any provided editor content (non-Yjs fallback)
+    if ((sharedCode === "NONE" || sharedCode === "") && fallbackContent) {
+      sharedCode = String(fallbackContent || '');
+      console.log(`Using fallback sharedCode for room ${roomId}: ${sharedCode}`);
+    }
+    // send the question over
+    if (questionDataStr) {
+      try {
+        qnData = JSON.parse(questionDataStr);
+      } catch (err) {
+        console.error("Error parsing question data JSON for room", roomId, err);
       }
     }
 
@@ -282,13 +299,13 @@ async closeRoom(roomId) {
   this.docs.delete(roomId);
 }
 
-  async _postAttemptToQuestionHistoryService(roomId, userId) {
+  async _postAttemptToQuestionHistoryService(roomId, userId, fallbackContent = null) {
     // read user progress state
     const userProgressState = await this.client.hGet(`room:${roomId}:info`, 'status');
 
     let payload;
     try {
-      payload = await this._getRoomPersistentInfo(roomId, userId);
+      payload = await this._getRoomPersistentInfo(roomId, userId, fallbackContent);
     } catch (err) {
       console.error('Error building persistent payload for Attempt History Service', err);
       payload = null;
@@ -302,22 +319,35 @@ async closeRoom(roomId) {
       payload.qnData &&
       payload.userNames;
 
-    if (userProgressState === 'solved') {
-      console.log('User finished the room successfully');
-      if (canNotify) {
-        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
-        // TODO: call Attempt History Service here (await fetch/HTTP client)
-      } else {
-        console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
-      }
+    if (!canNotify) {
+    console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
+    return;
+  }
+
+  try {
+    const response = await fetch(ATTEMPT_HISTORY_SERVICE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Attempt History Service returned error:', response.status, errorText);
     } else {
-      console.log('User did not finish the room in time');
-      if (canNotify) {
-        console.log(`Notifying Attempt History Service that user ${userId} did ${payload.completedStatus} at ${payload.connectedAtTime}`);
-        // TODO: call Attempt History Service here
-      } else {
-        console.error('Cannot notify Attempt History Service as some payload fields are null', payload);
-      }
+      const data = await response.json();
+      console.log('Successfully posted attempt to Attempt History Service:', data);
+    }
+  } catch (err) {
+    console.error('Error posting to Attempt History Service', err);
+  }
+
+  if (userProgressState === 'solved') {
+    console.log(`User finished the room successfully`);
+  } else {
+    console.log('User did not finish the room in time');
   }
 }
 

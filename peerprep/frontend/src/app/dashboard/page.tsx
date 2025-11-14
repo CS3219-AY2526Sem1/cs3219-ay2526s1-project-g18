@@ -7,14 +7,9 @@ import { useRouter } from "next/navigation"
 import { getSocket, initSocket } from "../socket/socket";
 import { get } from "http";
 
+const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
 
 
-//dummy user details
-// const dummyUser = JSON.stringify({
-//     id: 1,
-//     username: "coolguy123"
-// })
-// const token = "dummyToken" 
 
 
 
@@ -23,7 +18,9 @@ export default function DashboardPage() {
   const[user, setUser] = useState<any>(null)
   const[token,setToken] = useState<string>("")
   const[userName, setUserName] =  useState<string>("")
-  const[userId, setUserId] = useState<number | null>(null)
+  const[userId, setUserId] = useState<any>(null)
+  const[totalAttempts, setTotalAttempts] = useState<string>("")
+  const[successfulAttempts, setSuccessfulAttempts] = useState<string>("")
 
  // Make sure user is logged in + get userId and also userName
   useEffect(() => {
@@ -41,13 +38,46 @@ export default function DashboardPage() {
                 console.error("Invalid user data in session storage:", parsedUser);
             } else {
                 setUserName(parsedUser.username);
-                setUserId(parseInt(parsedUser.id));
+                setUserId(parsedUser.id);
             }
         }
         initSocket();
         const socket = getSocket();
         socket?.disconnect()
     }, [])
+
+    // retrieve the attempt history service analyitics data when userId is set
+    const getAttemptHistorySummary = async (id: string) => {
+      const url = `${ATTEMPT_HISTORY_API_URL}summary/${id}`;
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) {
+          console.log("Failed to fetch attempt history summary data:", response.statusText);
+            setTotalAttempts('0');
+            setSuccessfulAttempts('0');
+        return;
+        }
+        const data = await response.json();
+        console.log("Attempt history summary data:", data);
+        setTotalAttempts(data.totalAttempted.toString());
+        setSuccessfulAttempts(data.totalSolved.toString());
+      } catch (error) {
+        console.error("Error fetching attempt history summary data:", error);
+        return;
+      }
+    };
+
+    useEffect(() => {
+      if (userId === null) return;
+      console.log(userId.toString());
+      getAttemptHistorySummary(userId.toString());
+    }, [userId]);
+
   return (
     <div className="bg-dark-blue-bg h-screen w-screen flex flex-col pt-7 pl-12 pr-12 overflow-hidden">
 
@@ -80,7 +110,10 @@ export default function DashboardPage() {
           <div>
             <p className="text-text-main font-poppins text-3xl p-3">Question History
             </p>
-            <QuestionHistoryWidget/>
+            <QuestionHistoryWidget
+              totalAttempts={totalAttempts}
+              successfulAttempts={successfulAttempts}
+            />
           </div>
         </div>
       </div> 
