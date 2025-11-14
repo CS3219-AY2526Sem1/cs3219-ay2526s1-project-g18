@@ -23,6 +23,10 @@ COPY . .
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
+# Set a placeholder DATABASE_URL for Prisma generation during build
+# This will be overridden at runtime with the actual DATABASE_URL
+ENV DATABASE_URL="postgresql://placeholder:placeholder@placeholder:5432/placeholder?schema=public"
+
 # Generate Prisma client
 RUN npx prisma generate
 
@@ -61,7 +65,7 @@ ENV SERVER_PORT=3004
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3004/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+  CMD node -e "require('http').get('http://localhost:3004/', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
 
 # Start the application
 CMD ["./start.sh"]
