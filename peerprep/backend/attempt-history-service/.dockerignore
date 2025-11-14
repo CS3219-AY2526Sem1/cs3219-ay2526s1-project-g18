@@ -144,9 +144,6 @@ nodemon.json
 .eslintrc*
 .prettierrc*
 
-# TypeScript source files (since we're building to dist)
-src/
-
 # OS generated files
 .DS_Store
 .DS_Store?
