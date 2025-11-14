@@ -6,10 +6,10 @@ type ClientSocket = ReturnType<typeof io>;
 let socket: ClientSocket | null = null;
 
 export function initSocket() {
-    if (typeof window === "undefined") return null; // guard for SSR
+    // if (typeof window === "undefined") return null; // guard for SSR
+    console.log("Initializing new socket connection");
 
     if (socket) return socket;
-    console.log("Initializing new socket connection");
 
     const user = sessionStorage.getItem("user");
     const parsedUser = user ? JSON.parse(user) : null;
