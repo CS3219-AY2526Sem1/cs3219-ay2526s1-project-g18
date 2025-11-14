@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AiFeedback from "./components/AiFeedback";
 
-const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
+const ATTEMPT_HISTORY_API_URL = `${process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_SERVICE_API_URL}/attempts` || "http://localhost:3004/attempts/";
 
 
 function AttemptHistoryContent() {
@@ -28,7 +28,7 @@ function AttemptHistoryContent() {
 
 
     async function fetchAttemptDetails(attemptId: string) {
-        const url = `${ATTEMPT_HISTORY_API_URL}attempt/${attemptId}`;
+        const url = `${ATTEMPT_HISTORY_API_URL}/attempt/${attemptId}`;
         try {
             const response = await fetch(url, {
                 method: "GET",
