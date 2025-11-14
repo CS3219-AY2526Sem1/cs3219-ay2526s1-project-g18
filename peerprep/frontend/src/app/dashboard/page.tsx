@@ -5,13 +5,8 @@ import QuestionHistoryWidget from "./widgets/questionHistWidget"
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getSocket, initSocket } from "../socket/socket";
-import { get } from "http";
 
-const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
-
-
-
-
+const ATTEMPT_HISTORY_API_URL = `${process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_SERVICE_API_URL}/attempts` || "http://localhost:3004/attempts";
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -48,7 +43,7 @@ export default function DashboardPage() {
 
     // retrieve the attempt history service analyitics data when userId is set
     const getAttemptHistorySummary = async (id: string) => {
-      const url = `${ATTEMPT_HISTORY_API_URL}summary/${id}`;
+      const url = `${ATTEMPT_HISTORY_API_URL}/summary/${id}`;
       try {
         const response = await fetch(url, {
           method: "GET",
