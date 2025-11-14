@@ -39,7 +39,7 @@ export default function EditAccountPage() {
     async function handleEditAccount() {
         // API CALL TO BACKEND TO EDIT ACCOUNT DETAILS
         try {
-            const response = await fetch(`${process.env.USER_SERVICE_API_URL}/users/${user.id}/edit-account`, { // REPLACE WITH ACTUAL BACKEND URL
+            const response = await fetch(`${process.env.NEXT_PUBLIC_USER_SERVICE_API_URL}/users/${user.id}/edit-account`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
