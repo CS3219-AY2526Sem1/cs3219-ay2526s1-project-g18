@@ -204,6 +204,25 @@ Copilot provided a html file that allows manual SSE connection and logging.
 ### Author Notes:
 I did some minor modifications to the api call route, other than that the html file was largely left as is.
 
+---------------------------------------------------------------------------
+
+### Date/Time:
+2025-11-12
+### Tool:
+Github Copilot (Claude Sonnet 4)
+### Prompt/Command:
+Copilot was asked to generate a Dockerfile for a Node.js Express application to deploy the matching service.
+### Output Summary:
+Copilot generated a Dockerfile for the matching service.
+### Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+### Author Notes:
+I modified and used most of the suggested code and did testing by running it locally and when deploying. Further adjustments were made for correctness.
+
+---------------------------------------------------------------------------
+
 # Collab Service
 -----------------
 
@@ -281,6 +300,42 @@ Ignored its socket listener as I do not accept architecture advice and already h
 
 -------------------
 
+
+### Date/Time:
+2025-11-12
+### Tool:
+Github Copilot (Claude Sonnet 4)
+### Prompt/Command:
+Copilot was asked to generate a Dockerfile for a Node.js Express application to deploy the collaboration service.
+### Output Summary:
+Copilot generated a Dockerfile for the collaboration service.
+### Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+### Author Notes:
+I modified and used most of the suggested code and did testing by running it locally and when deploying. Further adjustments were made for correctness.
+
+---------------------------------------------------------------------------
+
+# User Service
+-----------------
+### Date/Time:
+2025-11-12
+### Tool:
+Github Copilot (Claude Sonnet 4)
+### Prompt/Command:
+Copilot was asked to generate a Dockerfile for a Node.js Express application to deploy the user service.
+### Output Summary:
+Copilot generated a Dockerfile for the user service.
+### Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+### Author Notes:
+I modified and used most of the suggested code and did testing by running it locally and when deploying. Further adjustments were made for correctness.
+
+---------------------------------------------------------------------------
 
 # Attempt History Service
 -----------------

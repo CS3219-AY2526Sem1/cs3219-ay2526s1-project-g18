@@ -6,7 +6,7 @@
 
 
 import type { Request, Response, NextFunction } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ export const addQuestionAttempt = async (req: Request, res: Response, next: Next
 
     const connectedAt = new Date(connectedAtTime);
 
-    const newAttempt = await prisma.$transaction(async (tx) => {
+    const newAttempt = await prisma.$transaction(async (tx: { questionAttempt: { create: (arg0: { data: { userId: any; sharedCode: any; completedStatus: any; connectedAtTime: Date; qnData: any; userNames: any[]; }; }) => any; }; userAttemptSummary: { upsert: (arg0: { where: { userId: any; }; update: { totalSolved?: { increment: number; }; totalAttempted: { increment: number; }; }; create: { userId: any; totalAttempted: number; totalSolved: number; }; }) => any; }; }) => {
       // Attempt to create new attempt
       const attempt = await tx.questionAttempt.create({
         data: {
@@ -53,9 +53,9 @@ export const addQuestionAttempt = async (req: Request, res: Response, next: Next
 
     return res.status(201).json(newAttempt);
 
-  } catch (error) {
+  } catch (error : any) {
     // Handle duplicate attempt (unique constraint) gracefully
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (error.code === 'P2002') {
       // Duplicate attempt detected
       return res.status(409).json({
         error: 'Attempt already exists for this user at the given time.',

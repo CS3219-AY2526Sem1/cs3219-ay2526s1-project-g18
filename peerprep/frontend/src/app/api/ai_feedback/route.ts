@@ -8,7 +8,7 @@ Author review: I removed the {} and validated correctness by testing with prompt
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 
-export const FEEDBACK_SYSTEM_PROMPT = `
+const FEEDBACK_SYSTEM_PROMPT = `
 IMPORTANT: Do not use Markdown, backticks, bold, italics, bullet points, code blocks, or any special formatting. Provide plain text only.
 Always respond exactly as instructed, in plain text. I WILL BE REALLY ANGRY IF YOU USE MARKDOWN OR ANY SPECIAL FORMATTING. PLEASE DO NOT USE \` (except for making json) or * (except for multiplication in code) .
 

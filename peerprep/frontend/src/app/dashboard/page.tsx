@@ -5,13 +5,8 @@ import QuestionHistoryWidget from "./widgets/questionHistWidget"
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getSocket, initSocket } from "../socket/socket";
-import { get } from "http";
 
-const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
-
-
-
-
+const ATTEMPT_HISTORY_API_URL = `${process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_SERVICE_API_URL}/attempts` || "http://localhost:3004/attempts";
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -48,7 +43,7 @@ export default function DashboardPage() {
 
     // retrieve the attempt history service analyitics data when userId is set
     const getAttemptHistorySummary = async (id: string) => {
-      const url = `${ATTEMPT_HISTORY_API_URL}summary/${id}`;
+      const url = `${ATTEMPT_HISTORY_API_URL}/summary/${id}`;
       try {
         const response = await fetch(url, {
           method: "GET",
@@ -84,10 +79,10 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between">
         <div className="flex-col">
           <div className="flex items-start mb-5">
-            <span className="font-inter text-logo-purple text-8xl font-bold">Peer</span>
-            <span className="font-inter text-logo-green text-8xl font-bold">Prep</span>
+            <span className="font-inter text-logo-purple text-6xl font-bold">Peer</span>
+            <span className="font-inter text-logo-green text-6xl font-bold">Prep</span>
           </div>
-          <p className="font-poppins text-text-main text-6xl font-bold">
+          <p className="font-poppins text-text-main text-4xl font-bold">
             Welcome back, {userName}!
           </p>
         </div>

@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import AttemptItem from "./components/attemptItem"
-import { get } from "http";
-const ATTEMPT_HISTORY_API_URL = process.env.ATTEMPT_HISTORY_API_URL || "http://localhost:3004/attempts/";
+
+const ATTEMPT_HISTORY_API_URL = `${process.env.NEXT_PUBLIC_ATTEMPT_HISTORY_SERVICE_API_URL}/attempts` || "http://localhost:3004/attempts";
 
 
 
@@ -35,7 +35,7 @@ export default function AttemptHistoryOverviewPage() {
         }, [])
         // Now fetch the attempt history data by getting the whole list of jsons from the backend for this userId
         async function fetchAttemptHistory(userId: string) {
-            const url = `${ATTEMPT_HISTORY_API_URL}${userId}`;
+            const url = `${ATTEMPT_HISTORY_API_URL}/${userId}`;
             try {
                 const response = await fetch(url, {
                     method: "GET",
@@ -118,7 +118,7 @@ export default function AttemptHistoryOverviewPage() {
         </p>
         </div>
         <div className="flex items-end"> 
-        <button className="bg-black-box text-white p-4 rounded-3xl font-poppins text-2xl hover:bg-darkest-box"
+        <button className="bg-blue-button text-white p-4 rounded-3xl font-poppins text-2xl hover:bg-blue-button-hover"
             onClick={() => { router.push('/dashboard')}}>
             Back to Dashboard
         </button>

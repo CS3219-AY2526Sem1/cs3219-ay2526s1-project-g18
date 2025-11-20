@@ -325,7 +325,7 @@ async closeRoom(roomId) {
   }
 
   try {
-    const response = await fetch(ATTEMPT_HISTORY_SERVICE_URL, {
+    const response = await fetch(`${ATTEMPT_HISTORY_SERVICE_URL}/attempts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

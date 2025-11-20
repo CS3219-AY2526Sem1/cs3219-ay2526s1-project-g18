@@ -14,7 +14,7 @@ import client from "../cloud-services/redis.js";
 import fs from "fs";
 import { sendMatchNotification, sendTimeoutNotification, sendJoinNoDifficultyNotification, sendJoinGeneralNotification, sendErrorNotification, closeSSEConnection} from "./notification-controller.js";
 
-const COLLAB_API_BASE = "http://localhost:3003";
+const COLLAB_API_BASE = process.env.COLLAB_SERVICE_API_URL ?? "http://localhost:3003";
 
 // Insert user id and question criteria into queue, register SSE connection
 export async function joinQueue(req, res) {
@@ -275,7 +275,7 @@ export async function handleNoDifficultyQueueDifficulty(idKey1, idKey2) {
 }      
 
 async function notifyCollabService(topic, difficulty, id1, id2, idKey1, idKey2) {
-    const body = { topic: topic, difficulty: difficulty, userId1: id1, userId2: id2 };
+    const body = { topic: topic, difficulty: difficulty.toString(), userId1: id1, userId2: id2 };
     try{
         const response = await fetch(`${COLLAB_API_BASE}/create-room`, {
             method: "POST",

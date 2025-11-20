@@ -1,6 +1,6 @@
 import { client, io , persistenceManager} from '../server.js';
 import { v4 } from 'uuid';
-const QUESTION_API_URL = 'https://peerprep-question-service-354103976519.asia-southeast1.run.app/api/';
+const QUESTION_API_URL = process.env.QUESTION_SERVICE_API_URL
 
 
 function convertDifficultyToString(difficulty) {
@@ -46,7 +46,7 @@ export async function createRoom(req, res) {
 
     // add question to room info
     // get the question from question service
-    const getRequestString = `${QUESTION_API_URL}questions?difficulty=${difficultyStr}&limit=1&topic=${topic.toUpperCase()}`;
+    const getRequestString = `${QUESTION_API_URL}/api/questions?difficulty=${difficultyStr}&limit=1&topic=${topic.toUpperCase()}`;
     console.log(getRequestString);
     // /api/questions?difficulty=EASY&limit=1&topic=HASHING
     const questionResponse = await fetch(getRequestString);
