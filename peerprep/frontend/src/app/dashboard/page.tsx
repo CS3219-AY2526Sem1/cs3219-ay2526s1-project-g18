@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const[userId, setUserId] = useState<any>(null)
   const[totalAttempts, setTotalAttempts] = useState<string>("")
   const[successfulAttempts, setSuccessfulAttempts] = useState<string>("")
+  const[questionTopics, setQuestionTopics] = useState<string[]>([])
 
  // Make sure user is logged in + get userId and also userName
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function DashboardPage() {
         socket?.disconnect()
     }, [])
 
-    // retrieve the attempt history service analyitics data when userId is set
+  //   // retrieve the attempt history service analyitics data when userId is set
     const getAttemptHistorySummary = async (id: string) => {
       const url = `${ATTEMPT_HISTORY_API_URL}/summary/${id}`;
       try {
@@ -66,6 +67,34 @@ export default function DashboardPage() {
         return;
       }
     };
+
+  // retrieve the question service topics list
+      const fetchQuestionTopicsList = async () => {
+        const QUESTION_SERVICE_API_URL = process.env.NEXT_PUBLIC_QUESTION_SERVICE_API_URL;
+        const url = `${QUESTION_SERVICE_API_URL}/questions/topic`;
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          if (!response.ok) {
+            console.log("Failed to fetch question topics data:", response.statusText);
+              setQuestionTopics([]);
+            return;
+          }
+          const data = await response.json();
+          setQuestionTopics(data);
+        } catch (error) {
+          console.log("Error fetching question topics data:", error);
+          setQuestionTopics([]);
+        }
+      };
+      useEffect(() => {
+        fetchQuestionTopicsList();
+      }, []);
+
 
     useEffect(() => {
       if (userId === null) return;
@@ -100,7 +129,9 @@ export default function DashboardPage() {
           <div className="flex flex-col">
             <p className="text-text-main font-poppins text-3xl p-3">Dive into a problem
             </p>
-            <MatchingWidget/>
+            <MatchingWidget
+              topics={questionTopics}
+            />
           </div>
           <div>
             <p className="text-text-main font-poppins text-3xl p-3">Question History
