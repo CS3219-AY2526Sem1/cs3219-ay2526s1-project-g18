@@ -1,0 +1,68 @@
+<!-- 
+AI Assistance Disclosure:
+Tool: Copilot (model: GPT-5 Mini), date: 2025-10-26
+Scope: Generated a HTTP page for testing SSE connections
+
+Author review: I adjusted for correctness and used it to debug.
+-->
+<html>
+<head>
+    <title>SSE Test</title>
+</head>
+<body>
+    <h1>SSE Connection Test</h1>
+    <div>
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" value="123">
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+    <pre id="events"></pre>
+
+    <script>
+        let evtSource;
+        const eventsDiv = document.getElementById('events');
+
+        function connect() {
+            const userId = document.getElementById('userId').value;
+            if (evtSource) {
+                evtSource.close();
+            }
+
+            evtSource = new EventSource(`http://localhost:3002/notifications?userId=${userId}`);
+            
+            evtSource.onopen = () => {
+                log('Connection opened');
+            };
+
+            evtSource.onmessage = (event) => {
+                log(`Received message: ${event.data}`);
+            };
+
+            evtSource.addEventListener('match', (event) => {
+                log(`Match event: ${event.data}`);
+            });
+
+            evtSource.addEventListener('timeout', (event) => {
+                log(`Timeout event: ${event.data}`);
+            });
+
+            evtSource.onerror = (error) => {
+                log('Error: Connection failed');
+            };
+        }
+
+        function disconnect() {
+            if (evtSource) {
+                evtSource.close();
+                log('Connection closed');
+            }
+        }
+
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            eventsDiv.textContent = `${time}: ${message}\n` + eventsDiv.textContent;
+        }
+    </script>
+</body>
+</html>

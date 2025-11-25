@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "monaco-editor/min/vs/editor/editor.main.css";
+
+@theme inline {
+
+  /*Color palette*/
+  --color-dark-blue-bg: var(--dark-blue-bg);
+
+  /* widget boxes*/
+  --color-dark-box: var(--dark-box);
+  --color-light-box: var(--light-box);
+  --color-darkest-box: var(--darkest-box);
+  --color-black-box: var(--black-box);
+  --color-green-box: var(--green-box);
+
+  --color-logo-purple: var(--logo-purple);
+  --color-logo-green: var(--logo-green);
+
+  /*outline colors*/
+
+  --color-purple-outline: var(--bright-purple);
+  --color-green-outline: var(--green-outline);
+  --color-red-outline: var(--red-outline);
+  --color-yellow-outline: var(--yellow-outline);  
+
+
+  /*button colors*/
+  --color-purple-button: var(--bright-purple);
+  --color-dg-button: var(--darker-green);
+  --color-lg-button: var(--light-green);
+  --color-blue-button: var(--button-blue);
+  --color-red-button: var(--hard-translucent);
+  --color-dblue-button: var(--dark-blue);
+
+  /*hover states*/
+  --color-blue-button-hover: var(--button-blue-hover);
+  --color-green-button-hover: var(--green-hover);
+  --color-red-button-hover: var(--red-hover);
+  --color-yellow-button-hover: var(--yellow-hover);
+  --color-dark-blue-hover: var(--dark-blue-hover);
+
+  /*easy med hard buttons*/
+  --color-easy-translucent: var(--easy-translucent);
+  --color-medium-translucent: var(--medium-translucent);
+  --color-hard-translucent: var(--hard-translucent);
+
+  /*font colors*/
+  --color-text-main: var(--text-main);
+  --color-text-light: var(--text-light);
+  --color-text-white: var(--text-white);
+  --color-text-grey: var(--text-grey);
+  --color-text-error: var(--text-error);
+  --color-text-red-button: var(--text-red-button);
+  --color-text-dark-purple: var(--text-dark-purple);
+
+  /* for input fields */
+  --color-text-field: var(--text-field);/*text inside input field*/
+  --color-text-area: var(--text-area);/*bg color*/
+
+  /*pretty colors*/
+  --color-pretty-blue: var(--pretty-blue);
+  --color-pretty-purple: var(--pretty-purple);
+
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
+  --font-poppins: var(--font-poppins);
+}
+
+:root {
+
+  --dark-blue-bg: #050325;
+
+  /* widget boxes*/
+  --dark-box: #2119566E;
+  --light-box: #6e5ae24a;
+  --darkest-box: #21195644;
+  --black-box: #00000042;
+  --green-box:#0b6d598e;
+
+  /*logo colors*/
+  --logo-purple: #6E5AE2;
+  --logo-green: #5ae2c6;
+
+  /*button colors*/
+  --bright-purple: #7316D7;
+  --darker-green: #0B6D59;
+  --light-green: #158C66;
+  --button-blue: #2F0B6D;
+  --dark-blue: #09072B;
+
+  /*outline colors*/
+  --green-outline: #0da385;
+  --red-outline: #961414;
+  --yellow-outline: #C4A10D;
+
+  /*hover states*/
+  --button-blue-hover: #460bacbb;
+  --green-hover: #1c7765e8;
+  --red-hover: #910e0ecf;
+  --yellow-hover: rgba(196, 156, 13, 0.724);
+  --dark-blue-hover: #151152e8;
+
+  /*easy med hard buttons*/
+  --easy-translucent: #158c668e;
+  --medium-translucent: #cba1167a;
+  --hard-translucent: #96141491;
+
+  /*font colors*/
+  --text-main: #958AD5;
+  --text-dark-purple:#958ad57a;
+  --text-light: #D0CAED;
+  --text-white: #FFFFFF;
+  --text-grey: rgba(255, 255, 255, 0.53);
+  --text-field: #3F3C4D;
+  --text-area: #FFFFFF6B;
+  --text-error: #d36a6a;
+  --text-red-button: #D4A2A2;
+
+  --pretty-blue: #8ec1e7;
+  --pretty-purple: #dcace8;
+
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.remote-cursor-peer1 {
+  border-left: 2px solid var(--color-logo-purple) !important;
+}
+.remote-cursor-peer2 {
+  border-left: 2px solid var(--color-logo-green) !important;
+}
+.remote-cursor-label-peer1 {
+  background: var(--color-logo-purple) !important;
+}
+.remote-cursor-label-peer2 {
+  background: var(--color-logo-green) !important;
+}
+
