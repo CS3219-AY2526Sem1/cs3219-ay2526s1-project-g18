@@ -8,11 +8,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 
+interface MatchingWidgetProps {
+// question topics array
+   topics: string[];
+}
+
 const dummyTopics =['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching'];
 
 const isOpen = false;
 
-export default function MatchingWidget() {
+export default function MatchingWidget(props: MatchingWidgetProps) {
     
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('Easy');
     const [isError, setIsError] = useState(false);
@@ -70,7 +75,7 @@ export default function MatchingWidget() {
                     </button>
                 </div>
                 <DropdownMenu 
-                    topics={dummyTopics}
+                    topics={props.topics.length === 0 ? dummyTopics : props.topics}
                     onOpenChange={setDropdownOpenState}
                     onTopicSelect={(topic) => setSelectedTopic(topic)}
                     placeholder="Select Question Topic"
